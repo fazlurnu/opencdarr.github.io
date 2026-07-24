@@ -1,0 +1,8 @@
+# Content is pulled from the OpenCDaRR repo at build time — never committed here.
+/content/
+# MkDocs build output.
+/site/
+# Python / OS cruft.
+.venv/
+__pycache__/
+.DS_Store

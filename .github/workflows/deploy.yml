@@ -1,0 +1,68 @@
+name: Build & deploy
+
+# Rebuild when this site's config changes, on a daily schedule (to pick up new content
+# pushed to the OpenCDaRR repo), and on manual request. For instant rebuilds on content
+# changes, have the OpenCDaRR repo send a repository_dispatch (see README.md).
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"          # daily 06:00 UTC
+  workflow_dispatch: {}
+  repository_dispatch:
+    types: [content-updated]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout site repo
+        uses: actions/checkout@v4
+
+      - name: Checkout OpenCDaRR content
+        uses: actions/checkout@v4
+        with:
+          repository: fazlurnu/OpenCDaRR
+          ref: main
+          path: content
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-docs.txt
+
+      - name: Assemble content (landing page + MathJax overlay)
+        run: bash scripts/prepare.sh content
+
+      - name: Build site
+        run: mkdocs build --strict --site-dir site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
