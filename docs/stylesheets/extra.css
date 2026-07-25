@@ -1,0 +1,45 @@
+/* Brand colours taken from the logo */
+:root {
+  --md-primary-fg-color:        #205B20;  /* logo green   */
+  --md-primary-fg-color--light: #2f7a2f;
+  --md-primary-fg-color--dark:  #164016;
+  --md-accent-fg-color:         #AA4945;  /* logo red     */
+}
+
+/* Dark scheme: keep the same brand hues but let text stay readable */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #2f7a2f;
+  --md-accent-fg-color:         #c96662;
+}
+
+/* Remove the top header bar entirely (openap.dev-style, logo lives in sidebar) */
+.md-header {
+  display: none;
+}
+
+/* Logo at the top of the left sidebar (openap.dev-style) */
+.md-sidebar__logo {
+  display: block;
+  padding: 0.8rem 0.6rem 0.4rem;
+}
+/* Hide the redundant site-name title under the sidebar logo */
+.md-nav--primary > .md-nav__title {
+  display: none !important;
+}
+.md-sidebar__logo img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* Fixed column widths for tables wrapped in <div class="col-widths" markdown>.
+   Interface a touch wider, Role widest, Implementations narrowest. */
+.md-typeset .col-widths table {
+  table-layout: fixed;
+  width: 100%;
+}
+.md-typeset .col-widths th:nth-child(1),
+.md-typeset .col-widths td:nth-child(1) { width: 30%; }
+.md-typeset .col-widths th:nth-child(2),
+.md-typeset .col-widths td:nth-child(2) { width: 70%; }

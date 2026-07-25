@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+<!--
+  Override the sidebar block to place the site logo at the top of the left
+  navigation (openap.dev-style), instead of in the top header.
+  This reproduces Material's default site_nav block and prepends a logo link.
+-->
+{% block site_nav %}
+  {% if nav %}
+    {% if page.meta and page.meta.hide %}
+      {% set hidden = "hidden" if "navigation" in page.meta.hide %}
+    {% endif %}
+    <div
+      class="md-sidebar md-sidebar--primary"
+      data-md-component="sidebar"
+      data-md-type="navigation"
+      {{ hidden }}
+    >
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner">
+          <a
+            href="{{ nav.homepage.url | url }}"
+            class="md-sidebar__logo"
+            title="{{ config.site_name }}"
+          >
+            <img
+              src="{{ 'assets/logo-with-text.png' | url }}"
+              alt="{{ config.site_name }}"
+            >
+          </a>
+          {% include "partials/nav.html" %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  {% if "toc.integrate" not in features %}
+    {% if page.meta and page.meta.hide %}
+      {% set hidden = "hidden" if "toc" in page.meta.hide %}
+    {% endif %}
+    <div
+      class="md-sidebar md-sidebar--secondary"
+      data-md-component="sidebar"
+      data-md-type="toc"
+      {{ hidden }}
+    >
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner">
+          {% include "partials/toc.html" %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

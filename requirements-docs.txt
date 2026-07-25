@@ -1,0 +1,3 @@
+# Used by the GitHub Actions build (CI does not use Docker).
+# Local preview uses the squidfunk/mkdocs-material Docker image instead.
+mkdocs-material>=9.5
