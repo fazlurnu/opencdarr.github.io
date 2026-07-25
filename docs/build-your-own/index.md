@@ -9,7 +9,7 @@ Everything in OpenCDaRR that you might change is either a plain value or an inte
 - **[Conflict Resolution](conflict-resolution.md)** — the avoidance manoeuvre.
 - **[Recovery Criteria](recovery-criteria.md)** — deciding when to return to the plan.
 - **[Separation Manager](separation-manager.md)** — wiring detection, resolution, and recovery together.
-- **[CNS](cns.md)** — navigation, communication, and surveillance.
+- **[CNS](cns/index.md)** — navigation, communication, and surveillance.
 
 Each interface and what it does is listed on the [How it works](../how-it-works.md) page. The pages here show how to supply your own.
 

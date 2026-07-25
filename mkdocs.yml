@@ -41,7 +41,9 @@ nav:
   - Intro: index.md
   - Installation: installation.md
   - How it works: how-it-works.md
+  - A first run: first-run.md
   - Modules:
+      - modules/index.md
       - Dynamics:
           - modules/dynamics/index.md
           - Multirotor: modules/dynamics/multirotor.md
@@ -50,8 +52,14 @@ nav:
       - Conflict Detection: modules/conflict-detection.md
       - Conflict Resolution: modules/conflict-resolution.md
       - Recovery Criteria: modules/recovery-criteria.md
-      - CNS: modules/cns.md
+      - CNS:
+          - modules/cns/index.md
+          - Communication: modules/cns/communication.md
+          - Navigation: modules/cns/navigation.md
+          - Surveillance: modules/cns/surveillance.md
+      - Wind: modules/wind.md
   - Environments:
+      - environments/index.md
       - Pairwise conflict: environments/pairwise.md
       - Multi-aircraft conflict: environments/multi-aircraft.md
   - Build your own:
@@ -63,7 +71,9 @@ nav:
       - Conflict Resolution: build-your-own/conflict-resolution.md
       - Recovery Criteria: build-your-own/recovery-criteria.md
       - Separation Manager: build-your-own/separation-manager.md
-      - CNS: build-your-own/cns.md
+      - CNS:
+          - build-your-own/cns/index.md
+          - Navigation: build-your-own/cns/navigation.md
 
 markdown_extensions:
   - admonition
