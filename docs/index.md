@@ -20,6 +20,7 @@ Separation management is the task of keeping aircraft apart, and it runs in thre
 
 - **[Installation](installation.md)** — get it running.
 - **[How it works](how-it-works.md)** — the class structure and one full simulation step.
-- **Modules** — the swappable pieces, from vehicle [dynamics](modules/dynamics/index.md) and [autopilot](modules/autopilot.md) to the separation stack of [conflict detection](modules/conflict-detection.md), [resolution](modules/conflict-resolution.md), and [recovery](modules/recovery-criteria.md), over the [CNS](modules/cns.md) layer beneath.
+- **[A first run](first-run.md)** — a complete mixed-fleet encounter, with and without noise.
+- **Modules** — the swappable pieces, from vehicle [dynamics](modules/dynamics/index.md) and [autopilot](modules/autopilot.md) to the separation stack of [conflict detection](modules/conflict-detection.md), [resolution](modules/conflict-resolution.md), and [recovery](modules/recovery-criteria.md), over the [CNS](modules/cns/index.md) layer beneath.
 - **Environments** — how the pieces are exercised, from a [pairwise conflict](environments/pairwise.md) up to [multi-aircraft](environments/multi-aircraft.md) encounters.
 - **[Build your own](build-your-own/index.md)** — a minimal runnable example and how to add your own model.

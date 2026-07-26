@@ -15,9 +15,9 @@ The stack is built from eight interfaces. Each is an abstract base class with a 
 | [`RecoveryCriterion`](modules/recovery-criteria.md) | Decide when it is safe to return to the plan |
 | [`Dynamics`](modules/dynamics/index.md) | Integrate the equations of motion for one vehicle |
 | [`Autopilot`](modules/autopilot.md) | Produce the nominal command that tracks the mission |
-| [`NavigationModel`](modules/cns.md) | Measure an aircraft's own (noisy) state to broadcast |
-| [`CommunicationModel`](modules/cns.md) | Deliver or drop a broadcast, with latency |
-| [`SurveillanceModel`](modules/cns.md) | Hold the perceived state of a receiver |
+| [`NavigationModel`](modules/cns/navigation.md) | Measure an aircraft's own (noisy) state to broadcast |
+| [`CommunicationModel`](modules/cns/communication.md) | Deliver or drop a broadcast, with latency |
+| [`SurveillanceModel`](modules/cns/surveillance.md) | Hold the perceived state of a receiver |
 
 </div>
 
@@ -35,3 +35,5 @@ The figure below shows one step for a pair of aircraft, `i` and `j`, inside `run
 </figure>
 
 Start from one aircraft's true state. **Navigation** adds noise to that state, producing the measurement the aircraft acts on and broadcasts. **Communication** carries the broadcast to the other aircraft, each link with its own reception probability and latency, so a message can arrive late or never. **Surveillance** on the receiving side updates the perceived traffic when a message lands and holds the last one otherwise. The `SeparationManager` then reads the aircraft's own noisy navigation and its perceived traffic, and overrides the `Autopilot` command when it infers a conflict. Finally, `Dynamics` takes that command and advances the true state to the next step, with **wind** perturbing the motion along the way.
+
+The [next page](first-run.md) runs this loop for a full encounter — two aircraft flying to a waypoint, meeting in conflict, and avoiding — and shows what the noise changes.
