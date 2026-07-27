@@ -5,13 +5,7 @@ Everything in OpenCDaRR that you might change is either a plain value or an inte
 - **[Performance](performance.md)** — the flight envelope of an airframe.
 - **[Dynamics](dynamics.md)** — how a vehicle moves.
 - **[Autopilot](autopilot.md)** — the nominal command that follows a mission.
-- **[Conflict Detection](conflict-detection.md)** — predicting a loss of separation.
-- **[Conflict Resolution](conflict-resolution.md)** — the avoidance manoeuvre.
-- **[Recovery Criteria](recovery-criteria.md)** — deciding when to return to the plan.
-- **[Separation Manager](separation-manager.md)** — wiring detection, resolution, and recovery together.
+- **[Separation Manager](separation-manager/index.md)** — build your own [conflict detection](separation-manager/index.md#conflict-detection), [resolution](separation-manager/index.md#conflict-resolution), and [recovery](separation-manager/index.md#recovery), and combine them into one object.
 - **[CNS](cns/index.md)** — navigation, communication, and surveillance.
 
 Each interface and what it does is listed on the [How it works](../how-it-works.md) page. The pages here show how to supply your own.
-
-!!! note "Draft"
-    A minimal end-to-end runnable example will open this section once the public API settles.

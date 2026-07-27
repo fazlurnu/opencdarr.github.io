@@ -49,9 +49,11 @@ nav:
           - Multirotor: modules/dynamics/multirotor.md
           - Fixed-wing: modules/dynamics/fixedwing.md
       - Autopilot: modules/autopilot.md
-      - Conflict Detection: modules/conflict-detection.md
-      - Conflict Resolution: modules/conflict-resolution.md
-      - Recovery Criteria: modules/recovery-criteria.md
+      - Separation Manager:
+          - modules/separation/index.md
+          - Conflict Detection: modules/separation/conflict-detection.md
+          - Conflict Resolution: modules/separation/conflict-resolution.md
+          - Recovery Criteria: modules/separation/recovery-criteria.md
       - CNS:
           - modules/cns/index.md
           - Communication: modules/cns/communication.md
@@ -62,15 +64,17 @@ nav:
       - environments/index.md
       - Pairwise conflict: environments/pairwise.md
       - Multi-aircraft conflict: environments/multi-aircraft.md
+  - Rare-event simulation: rare-event.md
   - Build your own:
       - build-your-own/index.md
       - Performance: build-your-own/performance.md
       - Dynamics: build-your-own/dynamics.md
       - Autopilot: build-your-own/autopilot.md
-      - Conflict Detection: build-your-own/conflict-detection.md
-      - Conflict Resolution: build-your-own/conflict-resolution.md
-      - Recovery Criteria: build-your-own/recovery-criteria.md
-      - Separation Manager: build-your-own/separation-manager.md
+      - Separation Manager:
+          - build-your-own/separation-manager/index.md
+          - Conflict Detection: build-your-own/separation-manager/conflict-detection.md
+          - Conflict Resolution: build-your-own/separation-manager/conflict-resolution.md
+          - Recovery Criteria: build-your-own/separation-manager/recovery-criteria.md
       - CNS:
           - build-your-own/cns/index.md
           - Navigation: build-your-own/cns/navigation.md
