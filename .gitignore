@@ -8,3 +8,4 @@ __pycache__/
 .DS_Store
 # Local editing-style reference, not part of the published site.
 /STYLE.md
+my-paper
