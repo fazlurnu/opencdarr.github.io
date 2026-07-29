@@ -1,6 +1,6 @@
 # Navigation
 
-Navigation is the **N** of [CNS](index.md): it answers one question — **given an aircraft's true state, what does its own sensor report?** In OpenCDaRR the sensor is GNSS (GPS/ADS-B), modelled by
+Navigation is the **N** of [CNS](index.md): given an aircraft's true state, it reports what that aircraft's own sensor measures. In OpenCDaRR the sensor is GNSS (GPS/ADS-B), modelled by
 [`GnssNavigation`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/navigation.py),
 which measures position and velocity, each perturbed by a pluggable 2D error distribution, and returns a broadcastable `Message`. The error lives at the source and is applied once — everyone else perceives it through the broadcast that [communication](communication.md) then delivers.
 

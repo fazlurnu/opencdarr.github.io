@@ -56,14 +56,14 @@ Below the envelope the multirotor meets its ground command to the metre and the 
 
 ## Detect-and-avoid under wind
 
-Does wind break separation management? A **uniform** wind adds the *same* drift to both aircraft, and the separation stack decides on the wind-blown **ground** frame — which is exactly the geometry it should act on. So to first order the wind cancels in the relative motion and the avoidance is preserved. What is left is each airframe's wind-relative agility.
+Separation management mostly holds up under wind because a **uniform** wind adds the *same* drift to both aircraft, and the separation stack decides on the wind-blown **ground** frame — which is exactly the geometry it should act on. So the wind cancels in the relative motion. What is left is each airframe's wind-relative performance, and — combined with asymmetric situational awareness — a minor chance of loss of separation.
 
 <figure markdown="span">
   ![A fixed-wing crossing conflict resolved in still air and in a crosswind; the left panel shows the ground tracks bending and crabbing under wind near the closest approach with the protected-zone circle, and the right panel shows both separation curves reaching their minimum above the 50 m protected zone](../assets/img/wind-daa.png)
   <figcaption>A fixed-wing crossing conflict, resolved in still air and in a 6 m/s wind (MVP + Past-CPA). The ground tracks crab and bend under wind (left), and because ground speed shifts with heading the closure arrives sooner — but the manoeuvre still opens the miss past the protected zone (right). Here the wind widens the miss; other bearings tighten it. Either way it clears.</figcaption>
 </figure>
 
-A multirotor absorbs a uniform wind almost completely — it crabs the wind out and its encounters are nearly wind-invariant. A fixed-wing pays a small, bearing-dependent residual: because its ground speed varies with heading, a wind along the track widens the miss while a crosswind tightens it. In every case the degradation is a *margin* effect — the miss moves by metres — not a failure. The large wind hazards, gusts and shear and anything that varies across the airspace, are exactly what a uniform field leaves out.
+A multirotor absorbs a uniform wind almost completely — it crabs the wind out and its encounters are nearly wind-invariant. A fixed-wing pays a small, bearing-dependent residual: because its ground speed varies with heading, a wind along the track widens the miss while a crosswind tightens it. On its own, wind is a *margin* effect — the miss moves by metres. Combined with asymmetric situational awareness, that margin erosion can tip a run into an actual loss of separation: in the [200-run Monte Carlo sweep](../first-run.md#wind) with a 10 m/s wind and GNSS self-noise, 2 of 200 runs lost separation (closest miss 34.8 m, inside the 50 m protected zone), against zero losses in the same sweep without wind. The large wind hazards, gusts and shear and anything that varies across the airspace, are exactly what a uniform field leaves out.
 
 ## In the code
 
@@ -80,6 +80,6 @@ The default everywhere is `NO_WIND`. The figures on this page are drawn by [`scr
 
 [^rl]: Reyner and Liem, *Energy-Efficient Trochoidal Path Planning for Unmanned Aircraft Under Wind and Performance Constraints*, Drones **2026**, 10, 426. OpenCDaRR re-derives only its kinematic point-mass model (Eqs 1–9) — the coordinated-turn yaw and wind vector-sum kinematics — never its path planner.
 
-## Don't like the wind effect in this model?
+## Your own wind model
 
-Of course, you can always [Build your own → Dynamics](../build-your-own/dynamics.md).
+A different wind effect can be modelled the same way — see [Build your own → Dynamics](../build-your-own/dynamics.md).

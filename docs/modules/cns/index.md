@@ -1,6 +1,6 @@
 # CNS
 
-**Communication, navigation, and surveillance (CNS)** is the layer that decides *what each aircraft knows about the others*, and how imperfect that knowledge is. It is the information that is passed to the separation algorithms (CD&R). The algorithm, in reality, acts only on what the CNS delivers. There is a real gap between what an aircraft perceived of itself compared to what is perceived by the intruder, this is called **asymmetric situational awareness**. This layer aims to make a realistic picture of the CNS systems.
+**Communication, navigation, and surveillance (CNS)** is the layer that decides *what each aircraft knows about the others*, and how imperfect that knowledge is. The separation algorithms (CDaRR) act only on what CNS delivers, never on the ground truth. What an aircraft perceives about itself and what an intruder perceives about it are not the same — a gap called **asymmetric situational awareness**. This layer models that gap as realistically as the underlying CNS systems allow.
 
 The three parts form a chain, from a source aircraft's true state to the picture a receiver ends up acting on:
 
@@ -18,11 +18,11 @@ flowchart LR
 - **[Communication](communication.md)** — whether that broadcast is delivered, and how late. Reception and latency, drawn independently on every directed link.
 - **[Surveillance](surveillance.md)** — what a receiver *holds* about a source as a result: the last message that link delivered, or nothing at all before first contact.
 
-Each is a pluggable model with a single method, you can swap an implementation to change the experiment. This page is the map, each part is elaborated on its own page.
+Each is a pluggable model with a single method; swap an implementation to change the experiment. This page is the overview — each part is covered in depth on its own page.
 
 ## The whole chain, in one picture
 
-Run all three together and the effect is a **position error** on what each aircraft acts on. Suppose that two aircraft, **i** and **j** is in conflict. Aircraft **i** is flying north-east at 10 m/s and receiving **j**'s state at probability of 1.0. Aircraft **j** is flying west at 5 m/s and receiving **i**'s state at 0.7. Each measure themselves with isotropic Gaussian GNSS noise (`pos_ci95 = 10 m`), broadcast on a jittered 1 Hz schedule, and hear the other over link with latency and reception probability.
+Run all three together and the effect is a **position error** on what each aircraft acts on. Consider two aircraft, **i** and **j**, in conflict. Aircraft **i** is flying north-east at 10 m/s and receives **j**'s state with probability 1.0. Aircraft **j** is flying west at 5 m/s and receives **i**'s state with probability 0.7. Each measures its own state with isotropic Gaussian GNSS noise (`pos_ci95 = 10 m`), broadcasts on a jittered 1 Hz schedule, and hears the other over a link with its own latency and reception probability.
 
 Below is the **asymmetric situational awareness**. Each row is one aircraft's view of **itself**, of the **other**, and of their **relative position**. Every panel is sampled against the current ground truth over a long run and recentred on it. The resulting scatter is similar to what is seen in real ADS-B reception data, for instance, the observations reported by [Matthias Schäfer](https://ieeexplore.ieee.org/abstract/document/10976935).
 

@@ -1,6 +1,6 @@
 # Surveillance
 
-Surveillance is the **S** of [CNS](index.md): given what [communication](communication.md) delivers or drops, what does an aircraft end up *holding* as its picture of the traffic? It is the receiving end of the chain, the state a decision actually reads.
+Surveillance is the **S** of [CNS](index.md): given what [communication](communication.md) delivers or drops, it determines what an aircraft ends up *holding* as its picture of the traffic. It is the receiving end of the chain, the state a decision actually reads.
 
 The default model, `LastKnown`, holds the **last message each directed link delivered**, with no dead-reckoning forward. Before a link's first delivery it holds nothing, so that neighbour is dropped from the perceived set until first heard rather than guessed at.
 

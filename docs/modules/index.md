@@ -4,9 +4,7 @@ The simulation is assembled from a handful of swappable pieces — mostly abstra
 
 - **[Dynamics](dynamics/index.md)** — how a vehicle moves: a multirotor as a holonomic point, a fixed-wing through a bank-limited turn.
 - **[Autopilot](autopilot.md)** — the nominal command that follows the mission.
-- **[Conflict Detection](conflict-detection.md)** — predicting a loss of separation before it happens.
-- **[Conflict Resolution](conflict-resolution.md)** — computing the avoidance manoeuvre against a set of intruders.
-- **[Recovery Criteria](recovery-criteria.md)** — deciding when it is safe to return to the plan.
+- **[Separation Manager](separation/index.md)** — the detect-and-avoid safety overlay that runs conflict detection, resolution, and recovery, overriding the nominal to keep aircraft apart.
 - **[CNS](cns/index.md)** — the communication, navigation, and surveillance layer that governs what each aircraft knows about the others.
 - **[Wind](wind.md)** — the steady environment field the loop threads into every step, and how each airframe meets it.
 

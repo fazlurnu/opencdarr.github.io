@@ -1,6 +1,6 @@
 # Conflict Detection
 
-Conflict detection is the trigger for everything the [separation manager](index.md) does. It answers one yes/no question about one **directed** pair: using the state the ownship *perceives* of an intruder, will the two lose their required separation within a look-ahead time? It is a pure prediction from the current states, and it returns a boolean, nothing more.
+Conflict detection is the trigger for everything the [separation manager](index.md) does. It answers one yes/no question about one **directed** pair: given the state the ownship *perceives* of an intruder, whether the two will lose their required separation within a look-ahead time. It is a pure prediction from the current states, and it returns a boolean, nothing more.
 
 Directed matters. Detection runs on the ownship's own perceived picture of the intruder, delivered by the [CNS](../cns/index.md) layer, not on ground truth. So the ownship and the intruder can disagree about whether they are in conflict when their perceptions differ, which is exactly the asymmetric-awareness effect CNS is there to model. In a no-noise run the two directed views coincide.
 

@@ -1,6 +1,6 @@
 # Conflict Resolution
 
-Once a pair is [detected](conflict-detection.md) in conflict, the resolver computes the avoidance manoeuvre: given the ownship and the set of intruders it is currently in conflict with, what velocity should it fly to clear them? The output is a **ground-velocity vector**, vehicle-neutral, which the airframe below then flies its own way (a multirotor takes it directly, a fixed-wing turns onto it under its bank limit). Two resolvers ship, and they embody two different ideas of what "clear them" means.
+Once a pair is [detected](conflict-detection.md) in conflict, the resolver computes the avoidance manoeuvre: given the ownship and the set of intruders it is currently in conflict with, it returns the velocity that clears them. The output is a **ground-velocity vector**, vehicle-neutral, which the airframe below then flies its own way (a multirotor takes it directly, a fixed-wing turns onto it under its bank limit). Two resolvers ship, and they embody two different ideas of what "clear them" means.
 
 - [`MVP`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/mvp.py) (Modified Voltage Potential) treats each intruder as a repulsion and steers away from the predicted collision point.
 - [`VO`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/vo.py) (Velocity Obstacle) treats each intruder as a forbidden cone of velocities and takes the shortest way out of it.

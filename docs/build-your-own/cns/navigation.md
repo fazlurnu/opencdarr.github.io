@@ -43,8 +43,8 @@ for the reference implementation — the bisection drives the analytic radial CD
 !!! warning "Keep the containment guarantee"
     Every built-in distribution puts exactly 95% of its radial mass inside `ci95`.
     Preserve that in a custom distribution — otherwise `pos_ci95` no longer means
-    "95% accuracy," and comparisons against the built-ins stop being apples to
-    apples. A quick check: draw many samples, take the 95th percentile of
+    "95% accuracy," and comparisons against the built-ins are no longer valid.
+    A quick check: draw many samples, take the 95th percentile of
     `hypot(east, north)`, and confirm it lands on `ci95`.
 
 A separate `vel_distribution` argument lets you supply a different (or the same)

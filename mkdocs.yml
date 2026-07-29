@@ -64,7 +64,10 @@ nav:
       - environments/index.md
       - Pairwise conflict: environments/pairwise.md
       - Multi-aircraft conflict: environments/multi-aircraft.md
-  - Rare-event simulation: rare-event.md
+  - Rare-event simulation:
+      - rare-event/index.md
+      - Running a simulation: rare-event/running.md
+      - Validation: rare-event/validation.md
   - Build your own:
       - build-your-own/index.md
       - Performance: build-your-own/performance.md

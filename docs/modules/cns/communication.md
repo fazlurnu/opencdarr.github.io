@@ -1,6 +1,6 @@
 # Communication
 
-Communication is the **C** of [CNS](index.md). Once [navigation](navigation.md) has produced a measurement, does it reach the other aircraft — and how late? The model, [`Comm`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/communication.py), captures the *effect* of a real datalink like ADS-B or ADS-L, where messages can be lost, delayed, and received at irregular update intervals. Note that this modeling focuses on the **reception** and **latency**, without simulating its message protocol.
+Communication is the **C** of [CNS](index.md). Once [navigation](navigation.md) has produced a measurement, `Comm` decides whether it reaches the other aircraft, and how late. The model, [`Comm`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/communication.py), captures the *effect* of a real datalink like ADS-B or ADS-L, where messages can be lost, delayed, and received at irregular update intervals. Note that this model focuses on **reception** and **latency**, without simulating the message protocol itself.
 
 ## Reception and latency, per directed link
 
@@ -19,7 +19,7 @@ comm = Comm(reception_prob=0.9, latency=lognormal_latency(median=0.1, sigma=0.25
 
 Three latency shapes are provided with the model: `constant_latency` (a fixed delay, drawing no randomness), `uniform_latency(low, high)`, and `lognormal_latency(median, sigma)`. At the default setting `reception_prob=1.0, latency=0.0` every broadcast lands in the same step it is sent, and the layer reduces exactly to instant, perfect delivery.
 
-Because latency can in principle exceed the broadcast interval, a late old message could arrive *after* a newer one. The model guards against that by having a receiver keeps the message that is **freshest by `t_meas`**, never letting a straggler clobber a more recent fix.
+Because latency can in principle exceed the broadcast interval, a late old message could arrive *after* a newer one. The model guards against that: a receiver always keeps the message that is **freshest by `t_meas`**, never letting a straggler clobber a more recent fix.
 
 ## Directed and asymmetric
 
@@ -30,11 +30,11 @@ comm = Comm(reception_prob={("OWN", "INT"): 0.80,    # OWN's broadcasts often lo
                             ("INT", "OWN"): 0.99})   # INT's nearly always heard
 ```
 
-Think of your partner trying to communicate with you while you are in a shower. The distance between you are the same but you are under the shower so you have more *interference*. Your partner outside the shower room can hear you better than you hear her, this is translates as the reception probability.
+The same distance does not guarantee the same reception. A physical obstruction, an antenna orientation, or a stronger receiver on one side can make one direction more reliable than the other, even between the same two aircraft.
 
 ## Reception probability and the update interval
 
-Reception and latency matter only through what they do to a receiver's **picture of the traffic**. What an aircraft acts on is never the intruder's current state, it is the last position it received. So the quantity that matters is the time between one received position update and the next, called **update interval**. When every message is received the update interval is just the broadcast interval.
+Reception and latency matter only through what they do to a receiver's **picture of the traffic**. What an aircraft acts on is never the intruder's current state — it is the last position it received. So the quantity that matters is the time between one received position update and the next, called **update interval**. When every message is received the update interval is just the broadcast interval.
 
 <figure markdown="span">
   ![Two panels comparing a reliable link (reception 0.99) and a lossy link (reception 0.80). Left: the time since the last received update over time, a stairstep that sits at one broadcast interval for the reliable link and lengthens to two, three, and four seconds for the lossy one during runs of missed messages. Right: the update-interval distribution, a single bump at one second for the reliable link and a geometrically decaying series of bumps at one, two, three, four seconds for the lossy one.](../../assets/img/comm-update-interval.png)

@@ -1,26 +1,30 @@
 # Introduction
 
-OpenCDaRR is an open, distilled reference for **conflict detection, resolution, and recovery** (CDR) in autonomous aviation — the models and methods that keep uncrewed aircraft separated. It simulates airborne traffic as plain data advanced by interchangeable models. A single aircraft is an object with states such as position and velocity. The physics, the guidance, and the separation logic are strategy objects that act on it. A communication, navigation, and surveillance (CNS) layer governs what each aircraft knows about the others, and how imperfect that knowledge is. A simulation loop wires them together and steps time forward.
-
 Source code is on [GitHub :octicons-link-external-16:](https://github.com/fazlurnu/OpenCDaRR).
+
+OpenCDaRR evaluates the safety and efficiency of **conflict detection, resolution, and recovery** (CDaRR) algorithms under **communication, navigation, and surveillance (CNS) uncertainty**, for ATM/UTM applications.
+
+Write your CDaRR algorithm, get your CDaRR performance.
 
 ## The problem
 
-Separation management is the task of keeping aircraft apart, and it runs in three stages. **Conflict detection (CD)** predicts a loss of separation before it happens. **Conflict resolution (CR)** computes the manoeuvre that avoids it. **Recovery** decides when it is safe to return to the plan. Each stage acts not on the truth but on what the **CNS** layer delivers, which is noisy, sometimes late, and different for every aircraft. The gap between what an aircraft knows and what is real is what makes the problem hard, and it is what OpenCDaRR is built to study.
+Separation management is held to a high safety standard. ICAO commonly uses a Target Level of Safety (TLS) of approximately 5 × 10⁻⁹ fatal accidents per flight hour when evaluating en-route separation standards for manned aviation. Before an algorithm is trusted in the air, we test it in simulation with as much of the real uncertainty included as the model can carry. But verifying against a target that small with Monte Carlo simulation alone is computationally exhaustive. OpenCDaRR provides the pieces needed to run that test: a **dynamics** model, a **separation manager** framework, an environment with **CNS** uncertainty and **wind** perturbation, and a **rare-event simulation** that reaches the tail with far fewer runs.
 
-## The ideas
+## Design principles
 
-**Realism.** We build in as much uncertainty as the model can carry. Aircraft measure their own position with an error, broadcasts are dropped or delayed, receivers act on an asymmetric situational awareness, and wind pushes each airframe off its commanded track. Results then reflect how separation holds up against the imperfections a real system faces. It doesn't cover all, but you can add more.
+**Realism.** Aircraft measure their own position with an error, broadcasts are dropped or delayed, and wind pushes each airframe off its commanded track. Results then reflect how separation holds up against the imperfections a real system faces, not an idealised one. This is not an exhaustive list of uncertainty sources — more can be added.
 
-**Modularity.** Conflict detection, conflict resolution, recovery criteria, the CNS, the vehicle dynamics, and the autopilot are each an abstract base class with one method. To change the experiment we swap an implementation, not the loop. A study comparing two resolvers, for example, changes one argument.
+**Modularity.** Conflict detection, conflict resolution, recovery criteria, the CNS, the vehicle dynamics, and the autopilot are each an abstract base class with one method. Changing an experiment means swapping an implementation, not the loop: a study comparing two resolvers changes one argument.
 
-**Enabling rare event simulation.** The aircraft state, the guidance progress, and the separation memory are plain values passed in and out of each step. The full state of a run can therefore be copied at any instant and continued independently. That is what a rare-event estimator (importance splitting, IPS) needs to clone a particle mid-flight and follow the rare branch toward a collision.
+**Agent-based modelling and simulation (ABMS).** Each aircraft is an `Agent` carrying its own state, guidance and recovery memory, and — through the CNS — its own asymmetric situational awareness of the others rather than a global truth. Every aircraft runs the same detect → resolve → recover cycle against those perceived states, so fleet-level outcomes emerge from local decisions taken on incomplete information.
 
-## How to read this
+**Support for rare-event simulation.** The aircraft state, the guidance progress, and the separation memory are plain values passed in and out of each step, so the full state of a run can be copied at any instant and continued independently. That is what a rare-event estimator (multi-level splitting, IPS) needs to clone a particle mid-flight and follow the rare branch toward a collision.
+
+## Contents
 
 - **[Installation](installation.md)** — get it running.
 - **[How it works](how-it-works.md)** — the class structure and one full simulation step.
 - **[A first run](first-run.md)** — a complete mixed-fleet encounter, with and without noise.
-- **Modules** — the swappable pieces, from vehicle [dynamics](modules/dynamics/index.md) and [autopilot](modules/autopilot.md) to the separation stack of [conflict detection](modules/conflict-detection.md), [resolution](modules/conflict-resolution.md), and [recovery](modules/recovery-criteria.md), over the [CNS](modules/cns/index.md) layer beneath.
-- **Environments** — how the pieces are exercised, from a [pairwise conflict](environments/pairwise.md) up to [multi-aircraft](environments/multi-aircraft.md) encounters.
+- **[Modules](modules/index.md)** — the swappable pieces, from vehicle [dynamics](modules/dynamics/index.md) and [autopilot](modules/autopilot.md) to the [separation manager](modules/separation/index.md) that runs conflict detection, resolution, and recovery, over the [CNS](modules/cns/index.md) layer beneath.
+- **[Environments](environments/index.md)** — how the pieces are exercised, from a [pairwise conflict](environments/pairwise.md) up to [multi-aircraft](environments/multi-aircraft.md) encounters.
 - **[Build your own](build-your-own/index.md)** — a minimal runnable example and how to add your own model.

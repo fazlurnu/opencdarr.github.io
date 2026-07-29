@@ -2,9 +2,9 @@
 
 The separation manager is the one piece in this section you do **not** subclass. It is the orchestrator: each decision step it runs three pluggable strategies in turn and overlays their result on the aircraft's nominal command.
 
-1. **Conflict detection** — *will these two lose separation?*
-2. **Conflict resolution** — *if so, what velocity avoids it?*
-3. **Recovery** — *when is it safe to stop avoiding and return to the mission?*
+1. **Conflict detection** — predicts whether the two will lose separation.
+2. **Conflict resolution** — computes the velocity that avoids it.
+3. **Recovery** — decides when it is safe to stop avoiding and return to the mission.
 
 Each of the three is an abstract base class with a single method, and each has a default: **`StateBased`**, **`MVP`**, and **`PastCPA`**. To build your own you subclass the one you care about, implement that one method, and pass the instance to `run_fleet`. Nothing else — the loop, the fleet, the other two strategies — changes.
 
@@ -94,7 +94,7 @@ Because it only reacts once the aircraft are *already* within 100 m — rather t
 
 ## Conflict resolution { #conflict-resolution }
 
-`resolve` returns a `MotionCommand` carrying a ground-velocity vector — `target_velocity=(v_east, v_north)` — that flows straight into the dynamics. It receives the **set** of intruders in conflict (length 1 for a pairwise encounter), so a multi-aircraft resolver composes them its own way. The default `MVP` nudges the velocity along a potential-field gradient; ours is blunter — hold course until an intruder is within 70 m, then hard-turn 90° to the right.
+`resolve` returns a [`MotionCommand`](../../modules/dynamics/index.md#motioncommand) carrying a ground-velocity vector — `target_velocity=(v_east, v_north)` — that flows straight into the dynamics. It receives the **set** of intruders in conflict (length 1 for a pairwise encounter), so a multi-aircraft resolver composes them its own way. The default `MVP` nudges the velocity along a potential-field gradient; ours is blunter — hold course until an intruder is within 70 m, then hard-turn 90° to the right.
 
 ```python
 from collections.abc import Sequence
@@ -201,7 +201,7 @@ Because both decisions read the *same* `_too_close`, they can never disagree —
   <figcaption>Detection + resolution in one object (<code>ProximityAvoider</code>, detect 100 m + steer away), with the default <code>PastCPA</code> recovery. Closest approach 68.1 m, clear.</figcaption>
 </figure>
 
-**All three.** Add detection to the combined resolver/recovery and one class covers the whole separation manager — a self-contained reactive CD&R governed by a single number, `react_range`: a conflict is on while a neighbour is inside it, resolution steers away, and recovery resumes once outside it. It no longer needs `StateBased` at all.
+**All three.** Add detection to the combined resolver/recovery and one class covers the whole separation manager — a self-contained reactive CDaRR governed by a single number, `react_range`: a conflict is on while a neighbour is inside it, resolution steers away, and recovery resumes once outside it. It no longer needs `StateBased` at all.
 
 ```python
 class ReactiveManager(ConflictDetector, ConflictResolver, RecoveryCriterion):
@@ -242,9 +242,9 @@ One class, one number, the entire safety behaviour — but the figure shows the 
 
 ## When it doesn't split into three: an end-to-end policy
 
-Detection, resolution, and recovery are the *classical* decomposition of separation assurance. A **learned policy** — a reinforcement-learning agent, or a neural network — usually does not think that way: it maps an observation (ownship's state and its neighbours) straight to an avoidance command, with no separate notion of "detect", "resolve", or "recover". Does that fit here?
+Detection, resolution, and recovery are the *classical* decomposition of separation assurance. A **learned policy** — a reinforcement-learning agent, or a neural network — usually does not think that way: it maps an observation (ownship's state and its neighbours) straight to an avoidance command, with no separate notion of "detect", "resolve", or "recover".
 
-It does, today, through the resolver slot. Put the whole policy in `resolve`, and make the other two methods trivial: `detect` returns `True` so the manager consults the policy whenever any traffic is perceived, and `should_resume` returns `False` so the *policy*, not the framework, decides when to ease back. The resolver already receives the full set of neighbours, and the ownship's nominal intent — where it would go with no traffic — rides on `own.desired`, stamped onto the state each step. So the policy has its entire observation in hand and returns one ground-velocity command; the detection and recovery methods become vestigial stubs.
+It fits today, through the resolver slot. Put the whole policy in `resolve`, and make the other two methods trivial: `detect` returns `True` so the manager consults the policy whenever any traffic is perceived, and `should_resume` returns `False` so the *policy*, not the framework, decides when to ease back. The resolver already receives the full set of neighbours, and the ownship's nominal intent — where it would go with no traffic — rides on `own.desired`, stamped onto the state each step. So the policy has its entire observation in hand and returns one ground-velocity command; the detection and recovery methods become vestigial stubs.
 
 ```python
 class EndToEndPolicy(ConflictDetector, ConflictResolver, RecoveryCriterion):

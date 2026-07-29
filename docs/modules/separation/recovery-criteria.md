@@ -1,6 +1,6 @@
 # Recovery Criteria
 
-Resolving a conflict is only half the manoeuvre. Once the ownship has turned away, something has to decide when it may stop resolving and return to its nominal plan, otherwise it would avoid forever. That decision is the recovery criterion. Each tick, for each pair it is still resolving, the [separation manager](index.md) asks the criterion a single question: is this pair clear enough to resume? The ownship reverts to nominal only once *every* active pair says yes, so a directed pairwise test generalises to "resume when clear of all" without the criterion itself knowing about more than one intruder.
+Resolving a conflict is only half the manoeuvre. Once the ownship has turned away, something has to decide when it may stop resolving and return to its nominal plan, otherwise it would avoid forever. That decision is the recovery criterion. Each tick, for each pair it is still resolving, the [separation manager](index.md) asks the criterion a single question: whether this pair is clear enough to resume. The ownship reverts to nominal only once *every* active pair says yes, so a directed pairwise test generalises to "resume when clear of all" without the criterion itself knowing about more than one intruder.
 
 Two criteria ship, and they differ in when they are willing to let go.
 

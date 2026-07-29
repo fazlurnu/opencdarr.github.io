@@ -1,140 +1,223 @@
 # A first run
 
-The [previous page](how-it-works.md) took one step apart. This one runs a whole encounter, so you can see the pieces working together before meeting them one at a time under **Modules**.
+The [previous page](how-it-works.md) took one simulation step apart. This one runs whole encounters, assembled entirely from the built-in models. We put two aircraft on a collision course, turn a resolver on, layer on sensing and communication uncertainty, and finish by repeating the encounter hundreds of times to read a safety rate off the aggregate.
 
-The scenario is the smallest one that still has something to resolve: **two aircraft, each flying to a waypoint, whose straight legs happen to cross.** They are a mixed pair — a multirotor and a fixed-wing — so the same conflict is resolved by two different airframes. They spawn comfortably apart; a few seconds in, each predicts a loss of separation against the other and turns off its plan to avoid; once past, both recover and carry on to their waypoint.
+The scenario stays fixed throughout — a multirotor climbing north and a fixed-wing crossing its path, spawned directly in conflict — so every change is attributable to the one piece we swap. Every piece here is a value or a single-method object handed to one function; [Build your own](build-your-own/index.md) later replaces any of them with code of your own, without touching the loop.
 
-## Setting up the encounter
+## Two aircraft from the built-in models
 
-Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (its [`Dynamics`](modules/dynamics/index.md) + [`Performance`](build-your-own/performance.md)), and an [`Autopilot`](modules/autopilot.md) to fly the mission. We give each a one-waypoint `goto` far down its initial track, so the nominal path runs straight through the crossing.
-
-Rather than hand-place the second aircraft, we let [`create_conflict`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/scenario.py) do it: it returns an intruder whose straight leg loses separation with the ownship a chosen number of seconds from now. We ask for a crossing 30 s out — later than the 20 s look-ahead — so nothing is flagged at spawn and the conflict only appears once it drifts inside the horizon.
+Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (a [`Dynamics`](modules/dynamics/index.md) + a [`Performance`](build-your-own/performance.md) envelope), and an [`Autopilot`](modules/autopilot.md). The ownship is a multirotor cruising north, flown by the built-in `M600` envelope and `Multirotor` model; the intruder is a fixed-wing on the built-in `SMALL_FIXEDWING` envelope and `FixedWing` model. A [`CruiseAutopilot`](modules/autopilot.md) holds each aircraft's track and speed whenever it is not avoiding.
 
 ```python
 from opencdarr.dynamics import FixedWing, Multirotor
-from opencdarr.fleet import Agent
-from opencdarr.mission import Mission
-from opencdarr.autopilot import WaypointAutopilot
+from opencdarr.fleet import Agent, run_fleet
 from opencdarr.performance import M600, SMALL_FIXEDWING
+from opencdarr.autopilot import CruiseAutopilot
 from opencdarr.scenario import create_conflict
 from opencdarr.state import AircraftState
-from opencdarr import geo
 
-# the multirotor cruises north; create_conflict places the fixed-wing so their
-# legs lose separation 30 s from now (crossing at 90 degrees)
+# ownship: a multirotor cruising north on the built-in M600 envelope
 copter = AircraftState(id="COPTER", lat=52.0, lon=4.0, trk=0.0, gs=18.0, yaw=0.0)
-plane = create_conflict(copter, intr_id="PLANE", dpsi=90.0, dcpa=0.0,
-                        tlos=30.0, rpz=50.0, gs_intr=15.0, side=1)
-
-# each aircraft's waypoint sits 800 m straight down its own track
-wp_copter = geo.forward(copter.lat, copter.lon, copter.trk, 800.0)
-wp_plane = geo.forward(plane.lat, plane.lon, plane.trk, 800.0)
-
-# the fixed-wing flies its cruise_airspeed; match it to the speed create_conflict
-# assumed for the intruder (18 m/s is the multirotor's own cruise, so it needs nothing)
-agents = [
-    Agent(copter, M600, Multirotor(), WaypointAutopilot(Mission(goto=wp_copter))),
-    Agent(plane, SMALL_FIXEDWING, FixedWing(),
-          WaypointAutopilot(Mission(goto=wp_plane), cruise_airspeed=15.0)),
-]
+agent_copter = Agent(copter, M600, Multirotor(), CruiseAutopilot(copter.trk, copter.gs))
 ```
 
-## Running it
-
-Most of the times, when we are sure about our algorithms, we want to get the performance of our code straight away. We can use [`run_fleet`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py) to advance the whole fleet to termination. It takes the separation stack — a [detector](modules/conflict-detection.md), a [resolver](modules/conflict-resolution.md), and a [recovery criterion](modules/recovery-criteria.md) — and every aircraft runs its own detect → resolve → recover against the others. Each airframe flies the *same* resolver command its own way: the multirotor takes the avoidance velocity directly, the fixed-wing turns onto it under a bank limit.
+Rather than hand-place the intruder, [`create_conflict`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/scenario.py) returns one whose straight leg loses separation with the ownship a chosen number of seconds from now — here a 90° crossing, 30 s out, later than the 20 s look-ahead so nothing is flagged at spawn. Both airframes are built-in, so the intruder is a `FixedWing` on the `SMALL_FIXEDWING` envelope.
 
 ```python
-from opencdarr.fleet import run_fleet
+plane = create_conflict(copter, intr_id="PLANE", dpsi=90.0, dcpa=0.0,
+                        tlos=30.0, rpz=50.0, gs_intr=15.0, side=1)
+agent_plane = Agent(plane, SMALL_FIXEDWING, FixedWing(), CruiseAutopilot(plane.trk, plane.gs))
+
+agents = [agent_copter, agent_plane]   # the framework is agent-based: collect them into a fleet
+```
+
+## The first run — no resolution
+
+[`run_fleet`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py) advances the whole fleet to termination. With no resolver, both aircraft simply fly their plans into each other — the baseline that shows the conflict is real.
+
+```python
 from opencdarr.cd import StateBased
+from opencdarr.viz import plot_pairwise
+
+run = run_fleet(
+    agents, rpz=50.0, t_lookahead=20.0, dt=0.1,
+    detector=StateBased(), resolver=None, recovery=None,
+    done_timeout=10.0, record=True,
+)
+print(run.min_sep, run.los)   # 0.8 m  True  — they collide
+fig = plot_pairwise(run, rpz=50.0, title="Pairwise crossing (perfect information), no reso")
+```
+
+<figure markdown="span">
+  ![Ground tracks of a multirotor flying north and a fixed-wing crossing eastward, meeting at the crossing; the separation on the right falls straight through the 50 m protected zone to near zero](assets/img/fr-noreso.png)
+  <figcaption>No resolver: the legs cross and separation collapses to 0.8 m, deep inside the 50 m protected zone.</figcaption>
+</figure>
+
+## Adding a resolver
+
+The separation stack is three swappable pieces — a [detector](modules/separation/conflict-detection.md), a [resolver](modules/separation/conflict-resolution.md), and a [recovery criterion](modules/separation/recovery-criteria.md). Adding a built-in `MVP` resolver and a `PastCPA` recovery — the only two arguments that change — is enough to clear the crossing. A `VO` resolver drops into the same slot if you would rather try that instead.
+
+```python
 from opencdarr.cr import MVP
 from opencdarr.crr import PastCPA
 
-outcome = run_fleet(
-    agents, rpz=50.0, t_lookahead=20.0, dt=0.5,
-    detector=StateBased(), resolver=MVP(margin=1.1),
-    recovery=PastCPA(bouncing_guard=True),
+run = run_fleet(
+    agents, rpz=50.0, t_lookahead=20.0, dt=0.1,
+    detector=StateBased(), resolver=MVP(), recovery=PastCPA(bouncing_guard=True),
+    done_timeout=10.0, record=True,
 )
-print(outcome.min_sep)  # 67.2 m — above the 50 m protected zone, so both stay clear
+print(run.min_sep, run.los)   # 89.3 m  False  — clear
 ```
 
-So far every aircraft has acted on the *truth*: it knows its own position exactly and sees the other's exactly. That is the clean baseline. To make it realistic we turn on GNSS self-noise — each aircraft now measures its own state with an error before acting and broadcasting. That is **one argument**, [`navigation`](modules/cns/navigation.md), plus the random stream it draws from:
+<figure markdown="span">
+  ![The same crossing with MVP resolution: the copter's track bends east near the conflict and the separation on the right arrests well above the protected zone](assets/img/fr-mvp.png)
+  <figcaption>With `MVP` and `PastCPA`, the copter turns off its plan in time and the closest approach holds at 89.3 m.</figcaption>
+</figure>
+
+## Sensing uncertainty
+
+So far every aircraft has acted on the truth. To make it realistic we turn on GNSS self-noise: each aircraft measures its own state with an error before acting and broadcasting. That is one argument — [`navigation`](modules/cns/navigation.md) — plus the noise magnitude on each state and a seeded random stream.
 
 ```python
 from dataclasses import replace
 from opencdarr.cns.navigation import GnssNavigation
 from opencdarr import rng
 
-# the noise magnitude rides on each aircraft's state (95% accuracy, in metres / m/s)
-noisy = [replace(a, state=replace(a.state, pos_ci95=15.0, vel_ci95=1.5)) for a in agents]
+noisy_agents = [replace(a, state=replace(a.state, pos_ci95=15.0, vel_ci95=1.5)) for a in agents]
 
-outcome = run_fleet(
-    noisy, rpz=50.0, t_lookahead=20.0, dt=0.5,
-    detector=StateBased(), resolver=MVP(margin=1.1),
-    recovery=PastCPA(bouncing_guard=True),
-    navigation=GnssNavigation(), rng=rng.generator(rng.root_seed_sequence(20260725)),
+noisy_run = run_fleet(
+    noisy_agents, rpz=50.0, t_lookahead=20.0, dt=0.5,
+    detector=StateBased(), resolver=MVP(), recovery=PastCPA(bouncing_guard=True),
+    navigation=GnssNavigation(), rng=rng.generator(rng.root_seed_sequence(42)),
+    stop_within=100.0, done_timeout=10.0, record=True,
 )
-print(outcome.min_sep)  # 67.8 m — a slightly different path, still clear
+print(noisy_run.min_sep, noisy_run.los)   # 72.3 m  False
 ```
-
-Everything else is identical. The whole difference between an idealised run and a noisy one is which state each aircraft gets to act on.
-
-## What it looks like
-
-`run_fleet` reports only the final numbers. To watch the encounter unfold we record the *same* run step by step: [`run_fleet_traced`](https://github.com/fazlurnu/OpenCDaRR/blob/main/scripts/handbook/tools/fleet_trace.py) — a small handbook helper — steps the identical loop and keeps the ground track and separation at every tick.
-
-```python
-from scripts.handbook.tools.fleet_trace import run_fleet_traced
-
-trace = run_fleet_traced(
-    agents, rpz=50.0, t_lookahead=20.0, dt=0.5,
-    detector=StateBased(), resolver=MVP(margin=1.1),
-    recovery=PastCPA(bouncing_guard=True),
-)
-trace.tracks      # each aircraft's (east, north) at every tick
-trace.min_sep     # separation between them at every tick
-trace.worst_sep   # the closest approach — equal to run_fleet's outcome.min_sep
-```
-
-Running that once for the clean fleet and once for the noisy one, then drawing the two together, gives the figure below.
 
 <figure markdown="span">
-  ![A multirotor flying north and a fixed-wing flying east cross paths; each turns aside near the crossing and the minimum separation dips but stays above the 50 m protected zone, with and without GNSS noise](assets/img/first-run.png)
-  <figcaption>The same encounter run on the true state (solid) and with GNSS self-noise (dashed). Left: the ground tracks — the multirotor bulges east and the fixed-wing dips as each avoids, then both continue to their waypoint. Right: the separation between them. It falls as they close, the conflict is detected around 10 s, and the manoeuvre arrests it at ~67 m, above the 50 m protected zone.</figcaption>
+  ![The crossing with GNSS self-noise: the tracks are slightly ragged but still separate cleanly, and the separation stays above the protected zone](assets/img/fr-gnss.png)
+  <figcaption>With a 15 m / 1.5 m·s⁻¹ GNSS error each aircraft acts on a slightly wrong self-fix, so the path differs — here it clears at 72.3 m.</figcaption>
 </figure>
 
-Two things are worth noticing. The separation never touches the protected zone: detection fires with enough look-ahead that the turn starts early and the closest approach is held well clear. And noise moves the result — with imperfect self-knowledge the two act on slightly wrong positions, so the tracks and the closest approach differ from the clean run. Here it stays safe; the point of the CNS layer is that it need not.
+## Communication uncertainty
 
-## One run is a sample
-
-That noisy run cleared at 67.8 m — but a *different* random seed draws a different error at every step, so it is one sample of a random outcome. The safety metric is the **aggregate** over many independent runs: how often separation is lost, and how the margin to the protected zone is really distributed. This is a Monte Carlo, and the [reproducible-RNG discipline](modules/cns/navigation.md) makes it a one-liner, one independent substream per run, all spawned from a single root seed, so the whole batch is fixed by that seed alone.
+Communication uncertainty layers on the same way. A directed [`Comm`](modules/cns/communication.md) model gives each transmission direction its own reception probability — `COPTER→PLANE` is more reliable than the reverse — over a lognormal latency, on its own reproducible stream.
 
 ```python
-from opencdarr import rng
+from opencdarr.cns import Comm, lognormal_latency
 
-# 100 independent noisy repeats of the same encounter — one RNG substream each
-outcomes = [
-    run_fleet(
-        noisy, rpz=50.0, t_lookahead=20.0, dt=0.5,
-        detector=StateBased(), resolver=MVP(margin=1.1),
-        recovery=PastCPA(bouncing_guard=True),
-        navigation=GnssNavigation(), rng=rng.generator(stream),
-    )
-    for stream in rng.spawn(rng.root_seed_sequence(20260725), 100)
-]
+nav_seq, comm_seq = rng.spawn(rng.root_seed_sequence(42), 2)   # independent nav / comm streams
 
-lost = sum(o.los for o in outcomes)              # runs that entered the protected zone
-worst = min(o.min_sep for o in outcomes)         # the closest approach across all 100
-print(f"{lost}/100 lost separation; worst {worst:.1f} m")  # 0/100 lost separation; worst 58.8 m
+comm = Comm(
+    reception_prob={("COPTER", "PLANE"): 0.9, ("PLANE", "COPTER"): 0.6},   # directed, asymmetric
+    latency=lognormal_latency(median=0.5, sigma=0.4),                      # seconds
+)
+
+# the same run, now also given a slightly wider resolver buffer and the comm model
+noisy_run = run_fleet(
+    noisy_agents, rpz=50.0, t_lookahead=20.0, dt=0.5,
+    detector=StateBased(), resolver=MVP(margin=1.1), recovery=PastCPA(bouncing_guard=True),
+    navigation=GnssNavigation(), rng=rng.generator(nav_seq),
+    communication=comm,          comm_rng=rng.generator(comm_seq),
+    stop_within=100.0, done_timeout=60.0, record=True,
+)
+print(noisy_run.min_sep, noisy_run.los)   # 109.6 m  False
 ```
 
-<figure markdown="span" style="max-width: 30rem; margin-inline: auto;">
-  ![A histogram of the closest approach reached in each of 100 noisy runs of the same encounter; the whole distribution sits to the right of the 50 m protected zone, spread from about 59 m to 150 m, with the single clean run at 67 m sitting near the low end](assets/img/first-run-montecarlo.png)
-  <figcaption>The closest approach reached in each of 100 noisy repeats of the same encounter. None cross the protected zone, but the outcome is spread from 59 m to 150 m (median 81 m). The single clean run (67 m) sits near the low end — one run tells you neither the typical margin nor the worst.</figcaption>
+<figure markdown="span">
+  ![The crossing with GNSS noise and lossy, delayed communication: the tracks are noisier but clear each other by a wide margin](assets/img/fr-comm.png)
+  <figcaption>Dropped and delayed broadcasts change which fixes each aircraft acts on. With the slightly wider `MVP(margin=1.1)` buffer this seed clears at 109.6 m — but a single seed proves little either way, which is the cue for a Monte Carlo.</figcaption>
 </figure>
 
-None of the hundred lost separation, so for this geometry, this CDaRR algorithms, and this noise the design is robust. However, estimating a loss rate so small that a plain Monte Carlo would never sample it. That is what the [rare-event machinery](index.md) in the introduction is for (WiP).
+## One run is a sample — a Monte Carlo
 
-This is still a single pairwise conflict, run once or a hundred times. The [Environments](environments/pairwise.md) section runs it at scale — sweeping the geometry, and then many aircraft at once — and each swappable piece used above has its own page under [Modules](modules/index.md).
+That noisy run cleared, but a different seed draws different errors, so it is one sample of a random outcome. The safety metric is the aggregate over many independent repeats — one substream per run, all spawned from a single root seed, so the whole batch is fixed by that seed alone and each run draws independent navigation *and* communication noise.
+
+```python
+n_runs = 200
+outcomes = [
+    run_fleet(
+        noisy_agents, rpz=50.0, t_lookahead=20.0, dt=0.2,
+        detector=StateBased(), resolver=MVP(), recovery=PastCPA(bouncing_guard=True),
+        navigation=GnssNavigation(), rng=rng.generator(nav_seq),
+        communication=comm,          comm_rng=rng.generator(comm_seq),
+        stop_within=100.0, done_timeout=60.0, record=True,
+    )
+    for nav_seq, comm_seq in (rng.spawn(sub, 2) for sub in rng.spawn(rng.root_seed_sequence(42), n_runs))
+]
+
+lost = sum(o.los for o in outcomes)
+min_seps = [o.min_sep for o in outcomes]
+print(f"{lost}/{n_runs} lost separation; dCPA min {min(min_seps):.1f} m, "
+      f"median {sorted(min_seps)[n_runs // 2]:.1f} m")   # 2/200 lost; min 48.1 m, median 96.3 m
+```
+
+Two views of the same sweep: [`plot_pairwise_montecarlo`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/viz.py) overlays every run's ground tracks, and a histogram of the closest approaches shows the margin distribution.
+
+<figure markdown="span">
+  ![Two hundred faintly overlaid ground tracks for the cruise sweep; the copter fans north and the fixed-wing fans east, forming a dense core with sparse tails](assets/img/fr-mc-cruise.png)
+  <figcaption>200 noisy repeats of the crossing (cruise, no waypoint). The dense core is where the fleet usually goes; the faint threads are the noise tails.</figcaption>
+</figure>
+
+<figure markdown="span" style="max-width: 32rem; margin-inline: auto;">
+  ![Histogram of the closest approach over 200 cruise runs; most of the distribution sits to the right of the 50 m protected-zone line, with a small mass touching it](assets/img/fr-hist-cruise.png)
+  <figcaption>The closest approach (dCPA) over the 200 runs: two dip just inside the protected zone (min 48.1 m, a ~1% rate), the rest spread up to the high nineties (median 96.3 m).</figcaption>
+</figure>
+
+## Waypoint mission
+
+Give the copter a bounded mission — a waypoint 75 s of cruise ahead — instead of an open-ended cruise, and repeat the sweep. Only the ownship's autopilot changes.
+
+```python
+from opencdarr.autopilot import WaypointAutopilot
+from opencdarr.mission import Mission
+from opencdarr import geo
+
+wp_copter = geo.forward(copter.lat, copter.lon, copter.trk, copter.gs * 75.0)
+agent_copter = Agent(copter, M600, Multirotor(), WaypointAutopilot(Mission(goto=wp_copter)))
+
+agents = [agent_copter, agent_plane]
+noisy_agents = [replace(a, state=replace(a.state, pos_ci95=15.0, vel_ci95=1.5)) for a in agents]
+# ... the same 200-run sweep (stop_within=50)  ->  2/200 lost; dCPA min 48.1 m, median 96.3 m
+```
+
+<figure markdown="span">
+  ![The waypoint sweep overlay; the copter's tracks converge toward its goal north of the crossing while the fixed-wing fans east](assets/img/fr-mc-waypoint.png)
+  <figcaption>With a waypoint the copter's tracks pinch toward its goal, but the safety picture is unchanged — 2/200 lost, median 96.3 m.</figcaption>
+</figure>
+
+<figure markdown="span" style="max-width: 32rem; margin-inline: auto;">
+  ![Histogram of the closest approach over 200 waypoint runs, again almost entirely to the right of the protected-zone line](assets/img/fr-hist-waypoint.png)
+  <figcaption>The dCPA distribution for the waypoint sweep — the same ~1% low tail as the cruise, median 96.3 m.</figcaption>
+</figure>
+
+## Wind
+
+Finally, a constant wind. One line builds the field, one argument passes it in.
+
+```python
+from opencdarr.wind import WindField
+
+wind = WindField.from_met(coming_from_deg=30.0, speed=10.0)   # constant 10 m/s from the NNE
+# ... the same sweep, now with  wind=wind  in run_fleet and n_runs=100
+#     ->  5/100 lost; dCPA min 45.7 m, median 73.7 m
+```
+
+Both airframes here are built-in and wind-aware, so both crab: the multirotor and the fixed-wing each fly a slightly displaced path, and the margin that resolution had bought erodes. The median closest approach falls from the mid-nineties to the low seventies, and the loss rate rises to about 5%.
+
+<figure markdown="span">
+  ![The wind sweep overlay with a faint downwind arrow field; the copter's tracks are pushed and spread, and several reach lower closest approaches](assets/img/fr-mc-wind.png)
+  <figcaption>The same sweep in a 10 m/s wind from the north-northeast (faint arrows point downwind). Both aircraft crab, the margins tighten, and five of the 100 runs enter the protected zone.</figcaption>
+</figure>
+
+<figure markdown="span" style="max-width: 32rem; margin-inline: auto;">
+  ![Histogram of the closest approach over 100 wind runs; the distribution shifts left and a small tail crosses the 50 m protected-zone line](assets/img/fr-hist-wind.png)
+  <figcaption>With wind the whole distribution shifts left, the low tail reaches 45.7 m, and a small mass falls left of the protected zone — the 5/100 losses (a ~5% rate).</figcaption>
+</figure>
+
+A hundred to two hundred runs are enough to *see* a rate of a few percent, but far too few to resolve the much smaller probabilities a real safety target asks for. Estimating those needs [rare-event simulation](rare-event/index.md).
+
+Every piece assembled above — the airframes, the resolver, the CNS layers, the mission, the wind — is a value or a single-method object passed to `run_fleet`. [Build your own](build-your-own/index.md) shows how to replace any of them with code of your own; [Modules](modules/index.md) documents the built-ins; the [Environments](environments/pairwise.md) section runs this same conflict at scale.
 
 !!! note "Run it yourself"
-    Every snippet on this page — the build, both runs, the plot, and the 100-run Monte Carlo — is [`scripts/handbook/first_run.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/scripts/handbook/first_run.py): `PYTHONPATH=. python scripts/handbook/first_run.py`. The `run_fleet_traced` helper mirrors `run_fleet` exactly — its closest approach matches to the metre — so the recorded picture is the same run those numbers came from.
+    Every step on this page is the notebook [`examples/handbook/a_first_run.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/a_first_run.ipynb), top to bottom — the build, each run, and all three Monte-Carlo sweeps.
