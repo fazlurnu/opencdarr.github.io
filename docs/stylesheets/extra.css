@@ -17,10 +17,15 @@
   display: none;
 }
 
-/* Logo at the top of the left sidebar (openap.dev-style) */
+/* Logo at the top of the left sidebar (openap.dev-style).
+   It lives OUTSIDE .md-sidebar__scrollwrap (see overrides/main.html), so it is a
+   fixed header and only the nav list scrolls beneath it. Material's own JS sizes
+   .md-sidebar__scrollwrap, so we must NOT add flex/height here — that would
+   override its inline height and break scrolling. */
 .md-sidebar__logo {
   display: block;
   padding: 0.8rem 0.6rem 0.4rem;
+  border-bottom: 0.05rem solid var(--md-default-fg-color--lightest);
 }
 /* Hide the redundant site-name title under the sidebar logo */
 .md-nav--primary > .md-nav__title {

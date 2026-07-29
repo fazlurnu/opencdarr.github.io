@@ -16,18 +16,18 @@
       data-md-type="navigation"
       {{ hidden }}
     >
+      <a
+        href="{{ nav.homepage.url | url }}"
+        class="md-sidebar__logo"
+        title="{{ config.site_name }}"
+      >
+        <img
+          src="{{ 'assets/logo-with-text.png' | url }}"
+          alt="{{ config.site_name }}"
+        >
+      </a>
       <div class="md-sidebar__scrollwrap">
         <div class="md-sidebar__inner">
-          <a
-            href="{{ nav.homepage.url | url }}"
-            class="md-sidebar__logo"
-            title="{{ config.site_name }}"
-          >
-            <img
-              src="{{ 'assets/logo-with-text.png' | url }}"
-              alt="{{ config.site_name }}"
-            >
-          </a>
           {% include "partials/nav.html" %}
         </div>
       </div>
