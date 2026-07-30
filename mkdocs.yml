@@ -80,6 +80,7 @@ nav:
           - Recovery Criteria: build-your-own/separation-manager/recovery-criteria.md
       - CNS:
           - build-your-own/cns/index.md
+          - Communication: build-your-own/cns/communication.md
           - Navigation: build-your-own/cns/navigation.md
 
 markdown_extensions:
