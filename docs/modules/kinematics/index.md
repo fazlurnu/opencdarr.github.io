@@ -1,16 +1,16 @@
-# Dynamics
+# Kinematics
 
-Dynamics is the interface that advances one aircraft by a single time step.
+Kinematics is the interface that advances one aircraft by a single time step.
 
 ```python
-state = dyn.step(state, command, perf, dt, wind)
+state = kinematics.step(state, command, perf, dt, wind)
 ```
 
 We model every vehicle as a **point mass** — a position, a ground track, and a ground speed — driven by a [PX4](https://docs.px4.io/main/en/ros/offboard_control)-style setpoint (the `MotionCommand`) and held inside that airframe's performance envelope. This is the fast-time modelling choice inherited from [BlueSky](https://github.com/TUDelft-CNS-ATM/bluesky). What matters for separation is where an aircraft goes and how quickly it can change course, not its attitude or its rotor speeds, so we integrate the point-mass kinematics under acceleration and turn limits rather than a full six-degree-of-freedom model. The envelopes come from assumed DJI M600 and [published fixed-wing UAV performance data](https://www.mdpi.com/2504-446X/10/5/337).
 
 ## MotionCommand
 
-The `command` in that call is a [`MotionCommand`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/dynamics/base.py) — what the aircraft is being asked to do, written in a form no single airframe owns. It is a frozen value shaped like a [PX4](https://docs.px4.io/main/en/ros/offboard_control) offboard setpoint: one field per channel of motion, every field optional, and `None` meaning *unspecified* rather than zero. The channels are the union across airframes, not a set every vehicle has.
+The `command` in that call is a [`MotionCommand`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/kinematics/base.py) — what the aircraft is being asked to do, written in a form no single airframe owns. It is a frozen value shaped like a [PX4](https://docs.px4.io/main/en/ros/offboard_control) offboard setpoint: one field per channel of motion, every field optional, and `None` meaning *unspecified* rather than zero. The channels are the union across airframes, not a set every vehicle has.
 
 | Channel | Meaning | Unit | Read by |
 | --- | --- | --- | --- |
@@ -40,4 +40,4 @@ Two airframes are implemented. They share this interface and differ only in how 
 - **[Multirotor](multirotor.md)** — a holonomic point mass that can move in any direction, stop, and hover, with facing decoupled from travel.
 - **[Fixed-wing](fixedwing.md)** — a coordinated-turn model that banks to turn and cannot stop.
 
-You can also [Build your own → Dynamics](../../build-your-own/dynamics.md).
+You can also [Build your own → Kinematics](../../build-your-own/kinematics.md).

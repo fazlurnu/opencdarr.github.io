@@ -25,7 +25,7 @@ All the examples share one encounter — a multirotor cruising north, a fixed-wi
 
 ```python
 from opencdarr.fleet import Agent, run_fleet
-from opencdarr.dynamics import FixedWing, Multirotor
+from opencdarr.kinematics import FixedWing, Multirotor
 from opencdarr.performance import M600, SMALL_FIXEDWING
 from opencdarr.autopilot import WaypointAutopilot
 from opencdarr.mission import Mission
@@ -94,13 +94,13 @@ Because it only reacts once the aircraft are *already* within 100 m — rather t
 
 ## Conflict resolution { #conflict-resolution }
 
-`resolve` returns a [`MotionCommand`](../../modules/dynamics/index.md#motioncommand) carrying a ground-velocity vector — `target_velocity=(v_east, v_north)` — that flows straight into the dynamics. It receives the **set** of intruders in conflict (length 1 for a pairwise encounter), so a multi-aircraft resolver composes them its own way. The default `MVP` nudges the velocity along a potential-field gradient; ours is blunter — hold course until an intruder is within 70 m, then hard-turn 90° to the right.
+`resolve` returns a [`MotionCommand`](../../modules/kinematics/index.md#motioncommand) carrying a ground-velocity vector — `target_velocity=(v_east, v_north)` — that flows straight into the kinematics. It receives the **set** of intruders in conflict (length 1 for a pairwise encounter), so a multi-aircraft resolver composes them its own way. The default `MVP` nudges the velocity along a potential-field gradient; ours is blunter — hold course until an intruder is within 70 m, then hard-turn 90° to the right.
 
 ```python
 from collections.abc import Sequence
 from opencdarr.cr.base import ConflictResolver
-from opencdarr.dynamics import MotionCommand
-from opencdarr.kinematics import velocity_enu, relative_enu
+from opencdarr.kinematics import MotionCommand
+from opencdarr.relative import velocity_enu, relative_enu
 
 class CloseRangeAvoid(ConflictResolver):
     """Hold course until an intruder is within `trigger` m, then turn 90 deg right."""

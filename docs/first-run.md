@@ -6,10 +6,10 @@ The scenario stays fixed throughout — a multirotor climbing north and a fixed-
 
 ## Two aircraft from the built-in models
 
-Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (a [`Dynamics`](modules/dynamics/index.md) + a [`Performance`](build-your-own/performance.md) envelope), and an [`Autopilot`](modules/autopilot.md). The ownship is a multirotor cruising north, flown by the built-in `M600` envelope and `Multirotor` model; the intruder is a fixed-wing on the built-in `SMALL_FIXEDWING` envelope and `FixedWing` model. A [`CruiseAutopilot`](modules/autopilot.md) holds each aircraft's track and speed whenever it is not avoiding.
+Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (a [`Kinematics`](modules/kinematics/index.md) + a [`Performance`](build-your-own/performance.md) envelope), and an [`Autopilot`](modules/autopilot.md). The ownship is a multirotor cruising north, flown by the built-in `M600` envelope and `Multirotor` model; the intruder is a fixed-wing on the built-in `SMALL_FIXEDWING` envelope and `FixedWing` model. A [`CruiseAutopilot`](modules/autopilot.md) holds each aircraft's track and speed whenever it is not avoiding.
 
 ```python
-from opencdarr.dynamics import FixedWing, Multirotor
+from opencdarr.kinematics import FixedWing, Multirotor
 from opencdarr.fleet import Agent, run_fleet
 from opencdarr.performance import M600, SMALL_FIXEDWING
 from opencdarr.autopilot import CruiseAutopilot

@@ -1,8 +1,8 @@
 # Wind
 
-Wind is the one part of the environment that reaches inside the flight dynamics. It is not one of the swappable interfaces — it is a **field the loop threads into every step**, the same category as the timestep. Like the [CNS](cns/index.md) layer, it is something the world imposes on the aircraft rather than a choice the aircraft makes; unlike CNS, it acts on the *truth*, bending the path each airframe actually flies.
+Wind is the one part of the environment that reaches inside the kinematics. It is not one of the swappable interfaces — it is a **field the loop threads into every step**, the same category as the timestep. Like the [CNS](cns/index.md) layer, it is something the world imposes on the aircraft rather than a choice the aircraft makes; unlike CNS, it acts on the *truth*, bending the path each airframe actually flies.
 
-A [`WindField`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/wind.py) is a steady, uniform, horizontal wind — a single velocity vector, the same everywhere and at every instant. It is a read-only input passed to `Dynamics.step`, never stored on an aircraft, and it defaults to `NO_WIND` (calm), so a run without wind is byte-for-byte what it was before wind existed. Gusts, shear, and any field that varies in space or time are deliberately left out; `WindField` is the seam they would slot behind later.
+A [`WindField`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/wind.py) is a steady, uniform, horizontal wind — a single velocity vector, the same everywhere and at every instant. It is a read-only input passed to `Kinematics.step`, never stored on an aircraft, and it defaults to `NO_WIND` (calm), so a run without wind is byte-for-byte what it was before wind existed. Gusts, shear, and any field that varies in space or time are deliberately left out; `WindField` is the seam they would slot behind later.
 
 ## The one relation
 
@@ -67,7 +67,7 @@ A multirotor absorbs a uniform wind almost completely — it crabs the wind out 
 
 ## In the code
 
-`WindField` lives in [`opencdarr/wind.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/wind.py). It is passed to an encounter through one argument — `run_encounter(..., wind=field)` or `run_fleet(..., wind=field)` — and threaded into each `Dynamics.step`, so turning wind on is a one-line change to any run:
+`WindField` lives in [`opencdarr/wind.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/wind.py). It is passed to an encounter through one argument — `run_encounter(..., wind=field)` or `run_fleet(..., wind=field)` — and threaded into each `Kinematics.step`, so turning wind on is a one-line change to any run:
 
 ```python
 from opencdarr.wind import WindField
@@ -82,4 +82,4 @@ The default everywhere is `NO_WIND`. The figures on this page are drawn by [`scr
 
 ## Your own wind model
 
-A different wind effect can be modelled the same way — see [Build your own → Dynamics](../build-your-own/dynamics.md).
+A different wind effect can be modelled the same way — see [Build your own → Kinematics](../build-your-own/kinematics.md).

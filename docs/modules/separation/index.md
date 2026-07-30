@@ -1,6 +1,6 @@
 # Separation Manager
 
-The **separation manager** is the detect-and-avoid safety overlay. It sits between the [autopilot](../autopilot.md), which says what the aircraft *wants* to do, and the [dynamics](../dynamics/index.md), which says what the aircraft is physically *able* to do. Its one job each tick: decide whether the aircraft's nominal command is safe given the traffic it perceives, and if not, replace it with an avoidance command until the danger has passed.
+The **separation manager** is the detect-and-avoid safety overlay. It sits between the [autopilot](../autopilot.md), which says what the aircraft *wants* to do, and the [kinematics](../kinematics/index.md), which says what the aircraft is physically *able* to do. Its one job each tick: decide whether the aircraft's nominal command is safe given the traffic it perceives, and if not, replace it with an avoidance command until the danger has passed.
 
 It answers that by running three steps in order, and this is why conflict detection, conflict resolution, and recovery live under it here:
 
@@ -19,7 +19,7 @@ flowchart LR
     NOM[nominal command<br/>from autopilot] --> SM
     PERC[perceived traffic<br/>from CNS] --> SM
     SM[Separation Manager<br/>detect → resolve → recover] --> CMD[final command]
-    CMD --> DYN([Dynamics.step])
+    CMD --> KIN([Kinematics.step])
 ```
 
 Concretely, that is one method:

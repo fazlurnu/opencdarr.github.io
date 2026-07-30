@@ -5,7 +5,7 @@ Everything in OpenCDaRR that you might change is either a plain value or an inte
 This page builds a whole encounter that way. We start from a built-in ownship, give it an intruder whose airframe is entirely our own, run the crossing with a built-in resolver and then with a resolver we write ourselves, layer on sensing and communication uncertainty, and finish by repeating the encounter hundreds of times to read a safety rate off the aggregate. Each extensible piece also has its own reference page for the details:
 
 - **[Performance](performance.md)** — the flight envelope of an airframe.
-- **[Dynamics](dynamics.md)** — how a vehicle moves.
+- **[Kinematics](kinematics.md)** — how a vehicle moves.
 - **[Autopilot](autopilot.md)** — the nominal command that follows a mission.
 - **[Separation Manager](separation-manager/index.md)** — build your own [conflict detection](separation-manager/conflict-detection.md), [resolution](separation-manager/conflict-resolution.md), and [recovery](separation-manager/recovery-criteria.md), and combine them into one object.
 - **[CNS](cns/index.md)** — navigation, communication, and surveillance.
@@ -14,10 +14,10 @@ The scenario stays fixed throughout — two aircraft on crossing legs, spawned d
 
 ## An aircraft from the built-in models
 
-Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (a [`Dynamics`](dynamics.md) + a [`Performance`](performance.md) envelope), and an [`Autopilot`](autopilot.md). The ownship is a multirotor cruising north, flown by the built-in `M600` envelope and `Multirotor` model; a [`CruiseAutopilot`](autopilot.md) holds its track and speed whenever it is not avoiding.
+Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (a [`Kinematics`](kinematics.md) + a [`Performance`](performance.md) envelope), and an [`Autopilot`](autopilot.md). The ownship is a multirotor cruising north, flown by the built-in `M600` envelope and `Multirotor` model; a [`CruiseAutopilot`](autopilot.md) holds its track and speed whenever it is not avoiding.
 
 ```python
-from opencdarr.dynamics import Multirotor
+from opencdarr.kinematics import Multirotor
 from opencdarr.fleet import Agent, run_fleet
 from opencdarr.performance import M600
 from opencdarr.autopilot import CruiseAutopilot
@@ -28,19 +28,19 @@ copter = AircraftState(id="COPTER", lat=52.0, lon=4.0, trk=0.0, gs=18.0, yaw=0.0
 agent_copter = Agent(copter, M600, Multirotor(), CruiseAutopilot(copter.trk, copter.gs))
 ```
 
-## Your own dynamics and performance
+## Your own kinematics and performance
 
-Every airframe is two swappable values, so the intruder can be entirely your own. A [`Dynamics`](dynamics.md) is any class implementing `step`; the simplest useful one follows the commanded ground velocity and keeps the odometry — it does not even read the envelope, or account for wind, which is fine for a first sketch. Its [`Performance`](performance.md) is a heavy, slow cargo drone.
+Every airframe is two swappable values, so the intruder can be entirely your own. A [`Kinematics`](kinematics.md) is any class implementing `step`; the simplest useful one follows the commanded ground velocity and keeps the odometry — it does not even read the envelope, or account for wind, which is fine for a first sketch. Its [`Performance`](performance.md) is a heavy, slow cargo drone.
 
 ```python
-from opencdarr.dynamics.base import Dynamics, MotionCommand, odometry_update
+from opencdarr.kinematics.base import Kinematics, MotionCommand, odometry_update
 from opencdarr.performance import Performance
 from opencdarr.wind import NO_WIND
 from opencdarr import geo
 import math
 from dataclasses import replace
 
-class VelocityFollower(Dynamics):
+class VelocityFollower(Kinematics):
     def step(self, state, command, perf, dt, wind=NO_WIND):
         v_east, v_north = command.v_east, command.v_north           # raises if no velocity set
         speed = math.hypot(v_east, v_north)
@@ -111,7 +111,7 @@ A [resolver](separation-manager/conflict-resolution.md) is likewise just a class
 
 ```python
 from opencdarr.cr.base import ConflictResolver
-from opencdarr.kinematics import velocity_enu, relative_enu
+from opencdarr.relative import velocity_enu, relative_enu
 from collections.abc import Sequence
 
 class CloseRangeAvoid(ConflictResolver):
@@ -260,7 +260,7 @@ wind = WindField.from_met(coming_from_deg=270.0, speed=10.0)   # constant 10 m/s
 # ... the same sweep, now with  wind=wind  in run_fleet  ->  2/200 lost; dCPA min 34.8 m, median 96.7 m
 ```
 
-The wind now tips a couple of runs into a loss of separation. One caveat matters for reading this: **`VelocityFollower` ignores the wind.** It reads only the commanded velocity, so the `wind` argument passes through unused — only the wind-aware `Multirotor` copter crabs and loses margin, while the cargo drone flies as if the air were still. Modelling wind on the cargo would mean giving its dynamics a wind term.
+The wind now tips a couple of runs into a loss of separation. One caveat matters for reading this: **`VelocityFollower` ignores the wind.** It reads only the commanded velocity, so the `wind` argument passes through unused — only the wind-aware `Multirotor` copter crabs and loses margin, while the cargo drone flies as if the air were still. Modelling wind on the cargo would mean giving its kinematics a wind term.
 
 <figure markdown="span">
   ![The wind sweep overlay with a faint downwind arrow field pointing east; the copter's tracks are pushed and spread by the wind, and a few reach lower closest approaches](../assets/img/byo-run-mc-wind.png)
