@@ -64,6 +64,10 @@ nav:
       - environments/index.md
       - Pairwise conflict: environments/pairwise.md
       - Multi-aircraft conflict: environments/multi-aircraft.md
+  - Experiments:
+      - experiments/index.md
+      - "Ex: resolver comparison": experiments/example-resolver-comparison.md
+      - Reproducibility: experiments/reproducibility.md
   - Rare-event simulation:
       - rare-event/index.md
       - Running a simulation: rare-event/running.md
