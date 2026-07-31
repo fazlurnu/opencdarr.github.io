@@ -16,9 +16,11 @@ Accuracy is a property of *that aircraft's* sensor: it can differ between
 aircraft and may evolve over a run (e.g. degrading GPS coverage), so it travels
 with the clonable state rather than sitting on a shared navigation object. The
 default `0.0` on both means a perfect sensor — the measurement equals the truth,
-a clean regression to the no-noise case. `GnssNavigation` also **copies the same
+a clean regression to the no-noise case. `GnssNavigation` also **stamps an
 accuracy onto the broadcast**, so a receiver gets the sender's declared accuracy
-*with* the message, as ordinary state.
+*with* the message, as ordinary state. By default that is the same number the
+error was drawn from; [declaring a different one](#declaring-a-different-accuracy)
+is how you study a sensor that misreports itself.
 
 ## Position error — from CI95 to σ
 
@@ -87,12 +89,20 @@ OpenCDaRR ships four, all in
 | Anisotropic Gaussian | `make_anisotropic_gaussian(var_ratio)` | elliptical (North axis wider) |
 | Anisotropic mixture | `make_anisotropic_mixture_gaussian(...)` | elliptical **and** heavy-tailed |
 
-The single invariant every distribution preserves: **the 95th percentile of the
+The first invariant every distribution preserves: **the 95th percentile of the
 2D radial error equals `ci95`**. That containment is what makes them
 interchangeable — you can swap in a heavier tail or an ellipse without changing
 what "50 m accuracy" means. For the Gaussian this is closed-form; for the others
 the calibrating scale is solved once per `ci95` by bisection and cached in the
 factory's closure, so per-sample draws stay cheap.
+
+The second: **every distribution draws the same number of times whatever `ci95`
+is**, including zero, where the error is exactly `(0, 0)` but the draws still
+happen. A sweep such as `pos_ci95 = Sweep([0, 10, 20, 40])` compares four cells
+that should differ only in the accuracy; if the zero cell skipped its draws,
+every random number after it in that run would shift and the cell would no longer
+be the same experiment with a different parameter. Scaling by σ costs nothing at
+zero, so drawing unconditionally is free.
 
 ![Position-error distributions: scatter per distribution with the 95% containment circle, and their radial CDFs all crossing 0.95 at ci95.](../../assets/noise-distributions.png)
 
@@ -136,13 +146,124 @@ rng = np.random.default_rng(0)
 true = AircraftState(id="OWN", lat=52.0, lon=4.0, trk=45.0, gs=10.0,
                      pos_ci95=40.0, vel_ci95=0.0)
 
-msg = nav.measure(true, t=0.0, rng=rng)   # the broadcast fix a receiver sees
-print(msg.state.lat, msg.state.lon)       # noisy position; pos_ci95 rides along
+state = nav.initial_state()                      # the layer's own state; empty for a plain model
+msg = nav.measure(state, true, t=0.0, rng=rng)   # the broadcast fix a receiver sees
+print(msg.state.lat, msg.state.lon)              # noisy position; the declared ci95 rides along
 ```
 
-## Adding your own noise distribution
+The `state` argument is what lets a navigation model remember something between
+ticks. A plain `GnssNavigation` ignores it; a model carrying an
+[effect](#degradation-that-persists) reads its own degradation out of it.
 
-A distribution is just a callable, so you can add one without subclassing — write a
-plain function or a calibrating factory that preserves the 95% containment
-guarantee. See **[Build your own → CNS → Navigation](../../build-your-own/cns/navigation.md)**
-for the two patterns and a worked `uniform_disk` example.
+## Declaring a different accuracy
+
+A broadcast carries one accuracy: the sender's **claim**. By default that is the
+truth — the error is drawn from `pos_ci95` and the same number goes on the air.
+Two further fields break them apart:
+
+- `pos_ci95_declared` — what the broadcast claims about position [m]
+- `vel_ci95_declared` — the same for velocity [m/s]
+
+Both default to `None`, meaning "claim the truth", so an honest transmitter needs
+no second number and every existing scenario is unchanged. Setting one gives you
+a sensor that misreports itself, in either direction:
+
+```python
+import dataclasses
+
+honest = AircraftState(id="OWN", lat=52.0, lon=4.0, trk=45.0, gs=10.0, pos_ci95=40.0)
+boastful = dataclasses.replace(honest, pos_ci95_declared=5.0)   # 40 m error, claims 5 m
+```
+
+The error still scatters at 40 m in both cases; only the number on the wire
+changes. Over-declaring is the case receiver autonomous integrity monitoring
+(RAIM) exists to catch: downstream logic that sizes its uncertainty from the
+broadcast — [`ProbabilisticFTR`](../separation/recovery-criteria.md), for
+instance — acts on a confident number that is wrong. Under-declaring is a transmitter
+derating itself, which makes receivers more cautious than they need to be.
+
+Only a *true* state ever needs both numbers. The message carries just the claim,
+in `pos_ci95`, which is what a receiver reads.
+
+## Degradation that persists
+
+Everything above is memoryless: each fix is an independent draw. A receiver that
+loses satellites and **stays** degraded needs the model to remember something
+between ticks, which is what a `NavEffect` provides.
+
+An effect answers one question per aircraft — how much worse is this fix right
+now — as a `NavQuality`: four multipliers, two scaling the error actually drawn
+and two scaling what the broadcast claims. Several effects compose by
+multiplying, with `1.0` as the identity.
+
+`GnssOutage` is the reference implementation:
+
+```python
+import numpy as np
+from opencdarr.cns import GnssNavigation, GnssOutage, gnss_outage
+
+# fail_rate is per hour: 600/h is a mean time to outage of 6 s.
+nav = GnssNavigation(effects=(GnssOutage(fail_rate=600.0, pos_factor=10.0, declare=True),))
+rng = np.random.default_rng(0)
+
+own = AircraftState(id="OWN", lat=52.0, lon=4.0, trk=45.0, gs=10.0, pos_ci95=20.0)
+state = nav.initial_state()
+for k in range(1, 8):
+    state = nav.evolve(state, [own], t=float(k), rng=rng)   # once per tick, whole fleet
+    fix = nav.measure(state, own, t=float(k), rng=rng).state
+    print(k, sorted(gnss_outage(state).out), round(fix.pos_ci95, 1))
+```
+
+```text
+1 [] 20.0
+2 [] 20.0
+3 [] 20.0
+4 [] 20.0
+5 ['OWN'] 200.0
+6 ['OWN'] 200.0
+7 ['OWN'] 200.0
+```
+
+At 1 Hz and this seed the receiver runs nominal for four ticks, degrades at
+`t = 5 s`, and stays degraded — the declared accuracy going from 20 m to 200 m
+alongside the error, because `declare=True`. `evolve` is called once per tick
+over the whole fleet, before anyone measures, so what an effect draws does not
+depend on which aircraft happened to transmit.
+
+Rates are per **hour** and applied over elapsed time, so the mean time to an
+outage is `1 / fail_rate` hours regardless of how often the aircraft broadcasts —
+a cadence sweep then moves one thing rather than two. A zero `recover_rate` (the
+default) means the outage latches for the rest of the run.
+
+`declare` is the fork. With `declare=True` the transponder derates itself and
+receivers widen their uncertainty to match. With `declare=False` the fix degrades
+while the broadcast keeps claiming nominal accuracy — the misleading-information
+case, and the only one where downstream logic acts confidently on a wrong number.
+The two lead to opposite conclusions, so neither can be a silent default.
+
+!!! info "An effect degrades a fix; it never suppresses a broadcast"
+    A receiver that has lost satellites reports a *worse* position, not no
+    position, so an effect scales accuracy rather than silencing the aircraft. An
+    aircraft that stops transmitting altogether is a **communication** failure —
+    `RadioHealth` on the [channel](communication.md) — not a navigation one. The
+    same physical event has one spelling, on the side where the link lives.
+
+!!! warning "The rare-event sampler reaches a continuous degradation, but not an outage jump"
+    A *continuous* accuracy degradation is coupled to minimum separation — a
+    bigger position error gives worse geometry gives less separation — so the
+    splitting shells reach it normally. A discrete outage is a jump the level
+    function carries no information about, so the shells cannot steer toward it.
+    Estimate a `fail_rate > 0` study by plain Monte Carlo, or condition on the
+    failure time and reweight. A *permanently* degraded sensor needs no effect at
+    all: it is just a larger `pos_ci95`.
+
+## Adding your own
+
+A distribution is just a callable, so you can add one without subclassing — write
+a plain function or a calibrating factory that preserves the two invariants
+above. An effect is a small class with three methods. See
+**[Build your own → CNS → Navigation](../../build-your-own/cns/navigation.md)**
+for both, with worked examples.
+
+The [navigation notebook](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/navigation.ipynb)
+runs everything on this page end to end.
