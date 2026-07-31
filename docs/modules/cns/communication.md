@@ -116,7 +116,7 @@ Either way the affected receiver keeps **holding** what it last got ([surveillan
 Telling the two failures apart needs **at least three aircraft**. With two, "AC1's transmitter died" and "AC2's receiver died" sever the same single link and leave an identical state, so a pairwise encounter cannot distinguish them and a sweep of `tx_fail_rate` against `rx_fail_rate` would be moving one parameter twice.
 
 !!! warning "Estimate an outage study by plain Monte Carlo, not by importance splitting"
-    A radio failure is a discrete jump that minimum separation carries no information about, so the [rare-event](../../rare-event/index.md) shells cannot steer toward it. Use plain Monte Carlo, or condition on the failure time and reweight.
+    A radio failure is a discrete jump that minimum separation carries no information about, so the [rare-event](../../estimators/rare-event/index.md) shells cannot steer toward it. Use plain Monte Carlo, or condition on the failure time and reweight.
 
 ## In the code
 

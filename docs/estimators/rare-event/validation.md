@@ -9,14 +9,14 @@ The geometry is fixed (a 90° crossing, dead-on, `rpz` 50 m, lookahead 60 s, `MV
 **Accuracy.** Across the sweep, IPS' results closely matches Monte Carlo's:
 
 <figure markdown="span">
-  ![Two side-by-side line plots of P(LoS) against reception probability rx, one for pos_ci95 = 3 m and one for 10 m, each with a Monte Carlo line and an IPS line; in both panels the two lines track each other closely, dipping from rx 1.0 down toward rx 0.5-0.7 and ticking back up slightly at rx 0.3](../assets/img/rare-event-p-vs-rx.png)
+  ![Two side-by-side line plots of P(LoS) against reception probability rx, one for pos_ci95 = 3 m and one for 10 m, each with a Monte Carlo line and an IPS line; in both panels the two lines track each other closely, dipping from rx 1.0 down toward rx 0.5-0.7 and ticking back up slightly at rx 0.3](../../assets/img/rare-event-p-vs-rx.png)
   <figcaption>P(LoS) against reception probability, Monte Carlo vs IPS.</figcaption>
 </figure>
 
 **Efficiency.** Each cell was run twice: the original sweep, and a rerun of IPS alone (same config, same seeds) to check reproducibility. Every P(IPS) came back identical to six decimal places — a literal repeat of the same computation — and the rerun used a new lockstep task schedule (200 tasks/level spread over 100 workers, instead of one process per replication) that cut IPS's wall-clock cost by roughly 6×. Monte Carlo was not rerun, so its cost is unchanged; the figure below compares Monte Carlo against the current (rerun) IPS only.
 
 <figure markdown="span">
-  ![Bar chart comparing mean wall-clock time per cell across the twelve-cell sweep: Monte Carlo at about 27 minutes and IPS at about 4.3 minutes, each bar with a whisker showing the range across cells and individual cells shown as points](../assets/img/rare-event-timing.png)
+  ![Bar chart comparing mean wall-clock time per cell across the twelve-cell sweep: Monte Carlo at about 27 minutes and IPS at about 4.3 minutes, each bar with a whisker showing the range across cells and individual cells shown as points](../../assets/img/rare-event-timing.png)
   <figcaption>Wall-clock time per cell, mean across the twelve cells (whiskers: min–max; points: individual cells). IPS reaches the same estimate as Monte Carlo in about a sixth of the time.</figcaption>
 </figure>
 

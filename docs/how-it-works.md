@@ -2,6 +2,16 @@
 
 This page describes the simulation: first the parts it is built from, then one full step showing how they interact.
 
+## Design principles
+
+**Realism.** Aircraft measure their own position with an error, broadcasts are dropped or delayed, and wind pushes each airframe off its commanded track. Results then reflect how separation holds up against the imperfections a real system faces, not an idealised one. This is not an exhaustive list of uncertainty sources — more can be added.
+
+**Modularity.** Conflict detection, conflict resolution, recovery criteria, the CNS, the vehicle kinematics, and the autopilot are each an abstract base class with one method. Changing an experiment means swapping an implementation, not the loop: a study comparing two resolvers changes one argument.
+
+**Agent-based modelling and simulation (ABMS).** Each aircraft is an `Agent` carrying its own state, guidance and recovery memory, and — through the CNS — its own asymmetric situational awareness of the others rather than a global truth. Every aircraft runs the same detect → resolve → recover cycle against those perceived states, so fleet-level outcomes emerge from local decisions taken on incomplete information.
+
+**Support for rare-event simulation.** The aircraft state, the guidance progress, and the separation memory are plain values passed in and out of each step, so the full state of a run can be copied at any instant and continued independently. That is what a rare-event estimator (multi-level splitting, IPS) needs to clone a particle mid-flight and follow the rare branch toward a collision.
+
 ## The class structure
 
 The stack is built from eight interfaces. Each is an abstract base class with a single method and one or more implementations, and each has its own page under **Modules**. To change an experiment we pick a different implementation of one interface, and nothing else moves. A new implementation can be added the same way.

@@ -215,7 +215,7 @@ Both airframes here are built-in and wind-aware, so both crab: the multirotor an
   <figcaption>With wind the whole distribution shifts left, the low tail reaches 45.7 m, and a small mass falls left of the protected zone — the 5/100 losses (a ~5% rate).</figcaption>
 </figure>
 
-A hundred to two hundred runs are enough to *see* a rate of a few percent, but far too few to resolve the much smaller probabilities a real safety target asks for. Estimating those needs [rare-event simulation](rare-event/index.md).
+A hundred to two hundred runs are enough to *see* a rate of a few percent, but far too few to resolve the much smaller probabilities a real safety target asks for. Estimating those needs [rare-event simulation](estimators/rare-event/index.md).
 
 Every piece assembled above — the airframes, the resolver, the CNS layers, the mission, the wind — is a value or a single-method object passed to `run_fleet`. [Build your own](build-your-own/index.md) shows how to replace any of them with code of your own; [Modules](modules/index.md) documents the built-ins; the [Environments](environments/pairwise.md) section runs this same conflict at scale.
 

@@ -272,7 +272,7 @@ The wind now tips a couple of runs into a loss of separation. One caveat matters
   <figcaption>With wind the low tail reaches 34.8 m and a small mass falls left of the protected zone — the 2/200 losses (a ~1% rate).</figcaption>
 </figure>
 
-Two hundred runs are enough to *see* a rate near 1%, but far too few to resolve the much smaller probabilities a real safety target asks for. Estimating those needs [rare-event simulation](../rare-event/index.md).
+Two hundred runs are enough to *see* a rate near 1%, but far too few to resolve the much smaller probabilities a real safety target asks for. Estimating those needs [rare-event simulation](../estimators/rare-event/index.md).
 
 Every piece built above has its own reference page in this section and under [Modules](../modules/index.md); the [Environments](../environments/pairwise.md) section runs this same conflict at scale. For the same walkthrough with only the built-in models — the shortest path to a first result — see [A first run](../first-run.md).
 
