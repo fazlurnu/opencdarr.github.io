@@ -1,269 +1,174 @@
 # Navigation
 
-Navigation is the **N** of [CNS](index.md): given an aircraft's true state, it reports what that aircraft's own sensor measures. In OpenCDaRR the sensor is GNSS (GPS/ADS-B), modelled by
-[`GnssNavigation`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/navigation.py),
-which measures position and velocity, each perturbed by a pluggable 2D error distribution, and returns a broadcastable `Message`. The error lives at the source and is applied once — everyone else perceives it through the broadcast that [communication](communication.md) then delivers.
+Navigation is where an aircraft finds out where it is — and gets it slightly wrong.
 
-## Where the noise magnitude lives
+That is the whole job: one aircraft, its own sensor, one measurement. Everything downstream inherits the mistake. The aircraft broadcasts the wrong position, the other aircraft believes it, and the conflict logic on both sides works from it. The error is applied **once, at the source**, so a single bad fix corrupts every receiver's picture of that aircraft at the same moment.
 
-The noise magnitude is **not** a parameter of the navigation object. It is read
-from the aircraft being measured, via two fields on `AircraftState`:
+Navigation is the **N** of [CNS](index.md). What it produces is handed to [communication](communication.md), which decides whether it arrives.
 
-- `pos_ci95` — 95% radial position accuracy [m]
-- `vel_ci95` — 95% radial velocity accuracy [m/s]
+## What is actually in the module
 
-Accuracy is a property of *that aircraft's* sensor: it can differ between
-aircraft and may evolve over a run (e.g. degrading GPS coverage), so it travels
-with the clonable state rather than sitting on a shared navigation object. The
-default `0.0` on both means a perfect sensor — the measurement equals the truth,
-a clean regression to the no-noise case. `GnssNavigation` also **stamps an
-accuracy onto the broadcast**, so a receiver gets the sender's declared accuracy
-*with* the message, as ordinary state. By default that is the same number the
-error was drawn from; [declaring a different one](#declaring-a-different-accuracy)
-is how you study a sensor that misreports itself.
+Small. One model, four error shapes, one degradation effect, and the values they pass around.
 
-## Position error — from CI95 to σ
-
-Position error is a zero-mean 2D isotropic Gaussian, each axis \(N(0, \sigma^2)\).
-GNSS accuracy is quoted as a **95% radial CI** — the radius containing 95% of
-fixes. The radial distance is Rayleigh, whose 95% quantile is
-\(\sigma\sqrt{\chi^2_{2,0.95}}\) with \(\chi^2_{2,0.95} = 5.9915\), so
-
-\[
-\text{CI95} = \sigma\sqrt{5.9915} = 2.4477\,\sigma
-\quad\Longrightarrow\quad
-\sigma = \frac{\text{CI95}}{2.4477} \approx 0.4085\,\text{CI95}.
-\]
-
-The error is drawn in the local East–North frame by the pluggable distribution,
-\((\text{rng}, \text{CI95}) \mapsto (e_E, e_N)\), and the measured position is the
-true position offset by that error through the project's own geodesy:
-
-\[
-\beta = \operatorname{atan2}(e_E, e_N), \quad
-\rho = \sqrt{e_E^2 + e_N^2}, \quad
-(\varphi', \lambda') = \texttt{geo.forward}(\varphi, \lambda, \beta, \rho).
-\]
-
-## Velocity error
-
-Velocity error is per-axis Gaussian \(N(0, \sigma_v^2)\) on the East–North
-components, with the same isotropic-2D CI95→σ conversion
-(\(\sigma_v = \text{vel\_ci95} / 2.4477\)). It is applied to the true velocity and
-converted back to a measured track and ground speed:
-
-\[
-(v_E, v_N) = \big(v\sin\psi + \varepsilon_E,\; v\cos\psi + \varepsilon_N\big),
-\quad
-\psi' = \operatorname{atan2}(v_E, v_N), \quad
-v' = \sqrt{v_E^2 + v_N^2}.
-\]
-
-The result is a `Message(source, state, t_meas)` — the noisy self-measurement,
-timestamped for the communication layer to deliver.
-
-!!! note "The own self-fix carries noise, but never staleness"
-    An aircraft decides on its **own noisy self-fix**, not on its true state —
-    both endpoints of an encounter carry navigation error. What the own fix skips
-    is the [communication](communication.md) layer: an aircraft always has a
-    *fresh* measurement of itself, never a dropped or stale one, whereas its view
-    of **others** is whatever the broadcast last delivered. All navigation draws
-    come from one dedicated RNG substream, drawn in agent order, so a run is fully
-    reproducible.
-
-## Noise distributions
-
-A noise distribution is any callable matching the `NoiseDistribution` protocol:
-
-```python
-(rng: np.random.Generator, ci95: float) -> tuple[float, float]   # (east, north) error [m]
-```
-
-OpenCDaRR ships four, all in
-[`opencdarr/cns/noise_distributions.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/noise_distributions.py):
-
-| Distribution | Factory | Shape |
+| what | name | in one line |
 |---|---|---|
-| Isotropic Gaussian | `gaussian` | circular, thin-tailed |
-| Heavy-tail mixture | `make_mixture_gaussian(tail_ratio, tail_weight)` | circular, occasional large outliers |
-| Anisotropic Gaussian | `make_anisotropic_gaussian(var_ratio)` | elliptical (North axis wider) |
-| Anisotropic mixture | `make_anisotropic_mixture_gaussian(...)` | elliptical **and** heavy-tailed |
+| the model | `GnssNavigation` | measures position and velocity, each with a pluggable error |
+| error shape | `gaussian` | round, well-behaved — the default |
+| | `make_mixture_gaussian` | round, but with occasional large outliers |
+| | `make_anisotropic_gaussian` | an ellipse: worse north–south than east–west |
+| | `make_anisotropic_mixture_gaussian` | both at once |
+| degradation | `GnssOutage` | a receiver that gets worse, and maybe recovers |
+| what it returns | `Message` | the noisy fix, plus the time it was taken |
+| what it remembers | `NavState` | anything an effect needs between ticks |
+| how bad it is | `NavQuality` | how much worse than nominal, and how much is admitted |
+| the interfaces | `NavigationModel`, `NoiseDistribution`, `NavEffect` | for writing your own |
 
-The first invariant every distribution preserves: **the 95th percentile of the
-2D radial error equals `ci95`**. That containment is what makes them
-interchangeable — you can swap in a heavier tail or an ellipse without changing
-what "50 m accuracy" means. For the Gaussian this is closed-form; for the others
-the calibrating scale is solved once per `ci95` by bisection and cached in the
-factory's closure, so per-sample draws stay cheap.
+That is the complete list. If you want a bias that grows over time, a proper multipath model, or a receiver that degrades over a city, none of those ship — and [writing your own](#writing-your-own) is shorter than it sounds.
 
-The second: **every distribution draws the same number of times whatever `ci95`
-is**, including zero, where the error is exactly `(0, 0)` but the draws still
-happen. A sweep such as `pos_ci95 = Sweep([0, 10, 20, 40])` compares four cells
-that should differ only in the accuracy; if the zero cell skipped its draws,
-every random number after it in that run would shift and the cell would no longer
-be the same experiment with a different parameter. Scaling by σ costs nothing at
-zero, so drawing unconditionally is free.
+## Accuracy belongs to the aircraft, not the model
 
-![Position-error distributions: scatter per distribution with the 95% containment circle, and their radial CDFs all crossing 0.95 at ci95.](../../assets/noise-distributions.png)
+The obvious design would be `GnssNavigation(accuracy=20.0)`. That is not what happens, and the reason is worth a minute.
 
-The scatters (top) all sit inside the same dashed `ci95` circle; the radial CDFs
-(bottom) all cross 0.95 at the same radius. The tail and the ellipse reshape
-*where* the error lands without changing the 95% budget — and note the anisotropy
-is invisible in the radial CDF: it only reshapes the scatter.
+A fleet has one navigation model but many receivers, and they are not equally good. One aircraft might carry a survey-grade unit and another a cheap one; the same aircraft might have a clean fix over open country and a poor one between buildings. So the two numbers live on the **aircraft**:
 
-!!! info "Anisotropy is axis-aligned, not track-aligned"
-    The wider axis of the anisotropic distributions is always **North**, not the
-    aircraft's heading. GPS position-error anisotropy comes from satellite
-    geometry, not the vehicle's direction of travel, so the error ellipse is not
-    oriented by track.
+- `pos_ci95` — position accuracy in metres
+- `vel_ci95` — velocity accuracy in m/s
 
-## A trajectory with the noise
-
-Put navigation together with a moving aircraft and the noise becomes a stream of
-**broadcast fixes** scattered around the true path. Below, one aircraft flies a
-straight constant-speed leg (`pos_ci95 = 40 m`, a fix every 2 s); each dot is what
-a receiver would actually see for that tick.
-
-![A straight trajectory with navigation noise: broadcast fixes scattered around the true path, for the isotropic Gaussian and the heavy-tail mixture, both at pos_ci95 = 40 m.](../../assets/noisy-trajectory.png)
-
-Both panels share the same `ci95`, so the fixes stay within a comparable band of
-the true path. The difference is in the tails: the **Gaussian** jitters evenly
-around the line, while the **heavy-tail mixture** hugs the path more tightly most
-of the time but throws the occasional large outlier — the kind of rare, large
-error that dominates safety metrics. This is the whole point of the pluggable
-design: same declared accuracy, different failure behaviour.
-
-The plot above is produced by measuring the true state at each tick:
+Both default to `0.0`, meaning a perfect sensor, so a run with no navigation noise needs no configuration at all.
 
 ```python
-import numpy as np
-from opencdarr.cns import GnssNavigation, make_mixture_gaussian
-from opencdarr.state import AircraftState
+nav = GnssNavigation()
+message = nav.measure(nav.initial_state(), true_state, t=5.0, rng=rng)
 
-nav = GnssNavigation(pos_distribution=make_mixture_gaussian(tail_ratio=3.0, tail_weight=0.1))
-rng = np.random.default_rng(0)
-
-true = AircraftState(id="OWN", lat=52.0, lon=4.0, trk=45.0, gs=10.0,
-                     pos_ci95=40.0, vel_ci95=0.0)
-
-state = nav.initial_state()                      # the layer's own state; empty for a plain model
-msg = nav.measure(state, true, t=0.0, rng=rng)   # the broadcast fix a receiver sees
-print(msg.state.lat, msg.state.lon)              # noisy position; the declared ci95 rides along
+message.state.lat       # the measured position, not the true one
+message.t_meas          # when it was taken -- communication needs this to know how stale it is
+message.state.pos_ci95  # what the broadcast claims about itself
 ```
 
-The `state` argument is what lets a navigation model remember something between
-ticks. A plain `GnssNavigation` ignores it; a model carrying an
-[effect](#degradation-that-persists) reads its own degradation out of it.
+### What "95%" means, and where 0.4085 comes from
 
-## Declaring a different accuracy
+Accuracy is quoted the way a receiver's datasheet quotes it: a **95% radial CI** — the radius of a circle containing 95 fixes out of 100. It is *not* a standard deviation, and confusing the two is a factor-of-2.4 mistake.
 
-A broadcast carries one accuracy: the sender's **claim**. By default that is the
-truth — the error is drawn from `pos_ci95` and the same number goes on the air.
-Two further fields break them apart:
+The error is drawn as a round 2D Gaussian, one draw per axis. The distance from the truth then follows a Rayleigh distribution whose 95th percentile sits at $\sigma\sqrt{5.9915}$, so hitting a stated 95% radius means
 
-- `pos_ci95_declared` — what the broadcast claims about position [m]
-- `vel_ci95_declared` — the same for velocity [m/s]
+$$\sigma = \frac{\text{CI95}}{\sqrt{5.9915}} \approx 0.4085 \times \text{CI95}$$
 
-Both default to `None`, meaning "claim the truth", so an honest transmitter needs
-no second number and every existing scenario is unchanged. Setting one gives you
-a sensor that misreports itself, in either direction:
+A 20 m accuracy is a per-axis sigma of about 8.2 m. Measured over 8 000 fixes, the 95th percentile of the error comes out at 19.7 m against a 20 m target, with 95.4% of fixes inside the circle.
+
+## The four error shapes
+
+The *size* of the error is `pos_ci95`. Its **shape** is a separate choice, and four ship with the library. Position and velocity take independent ones, because they come from different measurements inside the same receiver — position from timing the satellite signals, velocity from their Doppler shift — and there is no reason for them to misbehave together.
+
+<figure markdown="span">
+  ![Four scatter panels of position error, each 4000 points with a grey circle marking the 20 m accuracy. Gaussian is a round blob mostly inside the circle. The mixture is round but scatters occasional points two to three times further out. The anisotropic panel is a vertical ellipse, taller north-south than east-west. The anisotropic mixture is a tall ellipse with far-flung outliers.](../../assets/img/nav-error-shapes.png)
+  <figcaption>The four shapes at the same 20 m accuracy. The grey circle is <code>pos_ci95</code> in every panel, and 95% of the points fall inside it in all four — that is the contract they share.</figcaption>
+</figure>
+
+| shape | what it looks like | when you would use it |
+|---|---|---|
+| `gaussian` | a round blob | the default; fine unless you have a reason |
+| `make_mixture_gaussian` | round, plus rare far-out points | multipath — signals bouncing off buildings |
+| `make_anisotropic_gaussian` | an ellipse, taller than wide | satellite geometry favouring one direction |
+| `make_anisotropic_mixture_gaussian` | a tall ellipse with outliers | both problems at once |
+
+The ellipse is **axis-aligned, not aligned with the aircraft**. GNSS error is shaped by where the satellites are, not by which way the aircraft happens to be pointing, so the distribution never sees the heading.
+
+!!! note "The same advertised accuracy hides a factor-of-two difference in the worst case"
+    All four keep 95% of their fixes inside a 20 m circle. Over 20 000 draws, the worst single fix was **40.7 m** for `gaussian` and **79.0 m** for the anisotropic mixture. If your question is how often the *unlucky* case bites, the shape is the whole answer and the accuracy figure tells you nothing.
+
+A single number can say how big an error is but never what it looks like. That is the entire reason there is more than one shape.
+
+## Saying one thing and doing another
+
+A broadcast carries an accuracy figure — the sender telling everyone how much to trust it. By default that is the truth: the error is drawn from `pos_ci95` and the same number goes on the air.
+
+Setting `pos_ci95_declared` breaks the two apart, which is how you study a sensor that misreports itself:
 
 ```python
-import dataclasses
-
-honest = AircraftState(id="OWN", lat=52.0, lon=4.0, trk=45.0, gs=10.0, pos_ci95=40.0)
-boastful = dataclasses.replace(honest, pos_ci95_declared=5.0)   # 40 m error, claims 5 m
+liar = replace(aircraft, pos_ci95_declared=5.0)   # 20 m error, claims 5 m
 ```
 
-The error still scatters at 40 m in both cases; only the number on the wire
-changes. Over-declaring is the case receiver autonomous integrity monitoring
-(RAIM) exists to catch: downstream logic that sizes its uncertainty from the
-broadcast — [`ProbabilisticFTR`](../separation/recovery-criteria.md), for
-instance — acts on a confident number that is wrong. Under-declaring is a transmitter
-derating itself, which makes receivers more cautious than they need to be.
+The claim never touches the draw — same seed, same fix, only the label changes. Two cases, with opposite consequences:
 
-Only a *true* state ever needs both numbers. The message carries just the claim,
-in `pos_ci95`, which is what a receiver reads.
+- **Claiming better than reality.** The receiver sizes its safety margin from a confident number that is wrong. This is the integrity failure that receiver autonomous integrity monitoring exists to catch, and the only case where an aircraft acts confidently on bad data.
+- **Claiming worse than reality.** A transmitter derating itself. Receivers are more cautious than they need to be — wasteful, not dangerous.
 
-## Degradation that persists
+## A receiver that gets worse
 
-Everything above is memoryless: each fix is an independent draw. A receiver that
-loses satellites and **stays** degraded needs the model to remember something
-between ticks, which is what a `NavEffect` provides.
+Everything above assumes the sensor is as good at the end of the flight as at the start. `NavEffect` is the hook for one that is not, and `GnssOutage` is the only implementation that ships.
 
-An effect answers one question per aircraft — how much worse is this fix right
-now — as a `NavQuality`: four multipliers, two scaling the error actually drawn
-and two scaling what the broadcast claims. Several effects compose by
-multiplying, with `1.0` as the identity.
-
-`GnssOutage` is the reference implementation:
+It models a receiver losing satellites: the fix gets **worse**, it does not stop. That distinction is deliberate — an aircraft with a degraded GNSS still broadcasts a position, just a bad one. An aircraft that stops transmitting altogether is a *radio* failure and lives on the [communication](communication.md) side as `RadioHealth`. One physical event, one spelling.
 
 ```python
-import numpy as np
-from opencdarr.cns import GnssNavigation, GnssOutage, gnss_outage
-
-# fail_rate is per hour: 600/h is a mean time to outage of 6 s.
-nav = GnssNavigation(effects=(GnssOutage(fail_rate=600.0, pos_factor=10.0, declare=True),))
-rng = np.random.default_rng(0)
-
-own = AircraftState(id="OWN", lat=52.0, lon=4.0, trk=45.0, gs=10.0, pos_ci95=20.0)
-state = nav.initial_state()
-for k in range(1, 8):
-    state = nav.evolve(state, [own], t=float(k), rng=rng)   # once per tick, whole fleet
-    fix = nav.measure(state, own, t=float(k), rng=rng).state
-    print(k, sorted(gnss_outage(state).out), round(fix.pos_ci95, 1))
+GnssOutage(
+    fail_rate=40.0,      # outages per hour
+    recover_rate=25.0,   # per hour; 0 (the default) means it never recovers
+    pos_factor=10.0,     # how many times worse the fix is while degraded
+    declare=True,        # does the broadcast admit it?
+)
 ```
 
-```text
-1 [] 20.0
-2 [] 20.0
-3 [] 20.0
-4 [] 20.0
-5 ['OWN'] 200.0
-6 ['OWN'] 200.0
-7 ['OWN'] 200.0
+<figure markdown="span">
+  ![Effective position accuracy against time for two aircraft over ten minutes. Both step between 20 m nominal and 200 m degraded, but at different moments and for different durations: one spends most of the run degraded, the other most of it nominal.](../../assets/img/nav-outage.png)
+  <figcaption>Two receivers under the same outage model, ten minutes. They fail and recover independently — over this run one was degraded 23% of the time and the other 96%. With <code>recover_rate=0</code> the step up would never come back down.</figcaption>
+</figure>
+
+Two details matter more than they look.
+
+**Rates are per hour, not per broadcast.** A mean time to failure of half an hour is half an hour whether the aircraft transmits at 1 Hz or 2 Hz. Had the rate been per-message, changing the broadcast cadence would silently change the failure rate too, and a cadence study would be measuring two things at once.
+
+**`declare` is the interesting switch.** `True` is an honest transponder derating itself, so receivers widen their margins and behave sensibly. `False` is the fix going bad while the broadcast keeps claiming nominal — the case that actually hurts, because now everyone is confidently wrong.
+
+!!! note "Estimate an outage study with plain Monte Carlo, not the rare-event estimator"
+    A rare outage is the wrong shape for splitting. It is a sudden jump, and minimum separation carries no clue about whether it has happened, so the [shells](../../estimators/rare-event/index.md) cannot steer toward it. A *continuous* accuracy degradation is a different matter — that couples to separation and splits fine. A permanently degraded sensor needs no effect at all: it is just a larger `pos_ci95`.
+
+## Why the model has two methods
+
+`NavigationModel` requires `measure` and offers `evolve`. The split confuses people, so:
+
+| | `evolve` | `measure` |
+|---|---|---|
+| runs | once per tick, for every aircraft | once per aircraft that is transmitting |
+| may | change what the model remembers | only read it |
+| gives back | the updated memory | the `Message` |
+
+**Everything that changes state goes in `evolve`**, and the reason is reproducibility. Only some aircraft transmit on any given tick, so if `measure` advanced the state, the number of random draws taken would depend on *who happened to transmit* — and changing the broadcast schedule would shift every later random number in the run. Advancing once per tick, regardless of who fires, keeps the draws in a fixed place.
+
+If your model is stateless, ignore `evolve`: the default does nothing and draws nothing.
+
+## Writing your own
+
+### An error shape
+
+A shape is any function taking a generator and an accuracy and returning an east/north error in metres. Not a class, not a subclass — a function.
+
+```python
+def uniform_disk(g, ci95):
+    radius = ci95 / math.sqrt(0.95)          # sized so 95% lands inside ci95
+    r = radius * math.sqrt(g.random())
+    a = g.uniform(0.0, 2.0 * math.pi)
+    return r * math.cos(a), r * math.sin(a)
+
+nav = GnssNavigation(pos_distribution=uniform_disk)
 ```
 
-At 1 Hz and this seed the receiver runs nominal for four ticks, degrades at
-`t = 5 s`, and stays degraded — the declared accuracy going from 20 m to 200 m
-alongside the error, because `declare=True`. `evolve` is called once per tick
-over the whole fleet, before anyone measures, so what an effect draws does not
-depend on which aircraft happened to transmit.
+!!! note "Draw the same number of times whatever the accuracy is, including zero"
+    If a shape short-circuits at `ci95 == 0` and skips its draws, every later random number in that run shifts — and a sweep over `pos_ci95` stops being a controlled comparison, because the zero cell sits on a different noise stream from its neighbours. Scaling the output by zero costs nothing; skipping the draw costs correctness.
 
-Rates are per **hour** and applied over elapsed time, so the mean time to an
-outage is `1 / fail_rate` hours regardless of how often the aircraft broadcasts —
-a cadence sweep then moves one thing rather than two. A zero `recover_rate` (the
-default) means the outage latches for the rest of the run.
+### A degradation effect
 
-`declare` is the fork. With `declare=True` the transponder derates itself and
-receivers widen their uncertainty to match. With `declare=False` the fix degrades
-while the broadcast keeps claiming nominal accuracy — the misleading-information
-case, and the only one where downstream logic acts confidently on a wrong number.
-The two lead to opposite conclusions, so neither can be a silent default.
+Three methods: what the state starts as, how it advances, and what it means for one aircraft. Return a `NavQuality` saying how much worse the fix is (`pos_scale`) and how much of that the broadcast admits to (`pos_declared`); both at `1.0` means nothing has gone wrong. Several effects compose by multiplying.
 
-!!! info "An effect degrades a fix; it never suppresses a broadcast"
-    A receiver that has lost satellites reports a *worse* position, not no
-    position, so an effect scales accuracy rather than silencing the aircraft. An
-    aircraft that stops transmitting altogether is a **communication** failure —
-    `RadioHealth` on the [channel](communication.md) — not a navigation one. The
-    same physical event has one spelling, on the side where the link lives.
+The same drawing rule applies, for the same reason.
 
-!!! warning "The rare-event sampler reaches a continuous degradation, but not an outage jump"
-    A *continuous* accuracy degradation is coupled to minimum separation — a
-    bigger position error gives worse geometry gives less separation — so the
-    splitting shells reach it normally. A discrete outage is a jump the level
-    function carries no information about, so the shells cannot steer toward it.
-    Estimate a `fail_rate > 0` study by plain Monte Carlo, or condition on the
-    failure time and reweight. A *permanently* degraded sensor needs no effect at
-    all: it is just a larger `pos_ci95`.
+Worked examples of both are in **[Build your own → CNS → Navigation](../../build-your-own/cns/navigation.md)**.
 
-## Adding your own
+## Where the fix goes next
 
-A distribution is just a callable, so you can add one without subclassing — write
-a plain function or a calibrating factory that preserves the two invariants
-above. An effect is a small class with three methods. See
-**[Build your own → CNS → Navigation](../../build-your-own/cns/navigation.md)**
-for both, with worked examples.
+The `Message` this module produces goes to [communication](communication.md), which decides whether it arrives and how late, then to [surveillance](surveillance.md), which decides what a receiver believes in between deliveries. What comes out the far end is the only view the [conflict logic](../separation/index.md) ever gets.
 
-The [navigation notebook](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/navigation.ipynb)
-runs everything on this page end to end.
+The outcome of a run, though, is scored on the **true** states. Navigation error changes what the aircraft *do*; it never changes what is measured of them.
+
+## In the code
+
+The module is [`opencdarr/cns/navigation.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/navigation.py) and the shapes are in [`noise_distributions.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/noise_distributions.py). Every number and both figures on this page come from [`examples/handbook/navigation.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/navigation.ipynb) — run it top to bottom to reproduce them.

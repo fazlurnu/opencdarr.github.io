@@ -97,6 +97,9 @@ nav:
           - build-your-own/cns/index.md
           - Communication: build-your-own/cns/communication.md
           - Navigation: build-your-own/cns/navigation.md
+      - Experiments:
+          - CDaRR: build-your-own/experiments/cdarr.md
+          - Every seam at once: build-your-own/experiments/full-stack.md
 # Backlog board, hidden for now. To publish it, restore the three commented
 # lines: this nav entry, the exclude_docs entry, and javascripts/backlog.js.
 #  - Future work: future-work.md

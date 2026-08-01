@@ -1,6 +1,6 @@
 # How it works
 
-This page describes the simulation: first the parts it is built from, then one full step showing how they interact.
+This page describes the design principles, the parts it is built from, then a full step of the parts interaction.
 
 ## Design principles
 
@@ -14,7 +14,7 @@ This page describes the simulation: first the parts it is built from, then one f
 
 ## The class structure
 
-The stack is built from eight interfaces. Each is an abstract base class with a single method and one or more implementations, and each has its own page under **Modules**. To change an experiment we pick a different implementation of one interface, and nothing else moves. A new implementation can be added the same way.
+The stack is built from eight interfaces. Each is an abstract base class with a single method and one or more implementations, and each has its own page under **[Modules](modules/index.md)**. To change an experiment we pick a different implementation of one interface, and nothing else moves. A new implementation can be added the same way.
 
 <div class="col-widths" markdown>
 
@@ -31,9 +31,58 @@ The stack is built from eight interfaces. Each is an abstract base class with a 
 
 </div>
 
-Two objects tie these parts together. `SeparationManager` runs detection, resolution, and recovery against the traffic it is handed. `Agent` bundles one aircraft's state with the models that fly it. Above both sits the simulation loop, and that loop is where the CNS layer and the wind field come in.
+Two objects tie these parts together. [`SeparationManager`](modules/separation/index.md) runs detection, resolution, and recovery against the traffic it is handed. `Agent` bundles one aircraft's state with the models that fly it. Above both sits the simulation loop, and that loop is where the CNS layer and the wind field come in.
 
-The command that moves between these layers is a vehicle-agnostic setpoint called [`MotionCommand`](modules/kinematics/index.md#motioncommand). The autopilot proposes one, `SeparationManager` may override it to resolve a conflict, and `Kinematics` adjusts it to the aircraft's flight envelope.
+The command that moves between these layers is a vehicle-agnostic setpoint called [`MotionCommand`](modules/kinematics/index.md#motioncommand). The autopilot proposes one, [`SeparationManager`](modules/separation/index.md) may override it to resolve a conflict, and [`Kinematics`](modules/kinematics/index.md) adjusts it to the aircraft's flight envelope.
+
+## An aircraft is an `Agent`
+
+An `Agent` is everything that belongs to *one* aircraft. It is the object you build to put an aircraft in a run, and it holds four things:
+
+```python
+Agent(state, perf, kinematics(), autopilot())
+#     |      |     |             |
+#     |      |     |             +-- what it is trying to do when no conflict
+#     |      |     +---------------- how it moves
+#     |      +---------------------- what it is capable of
+#     +----------------------------- where it is right now
+```
+
+The last two have sensible defaults, so `Agent(state, perf)` is already a complete aircraft: it gets a [`Multirotor`](modules/kinematics/multirotor.md) airframe and a [`CruiseAutopilot`](modules/autopilot.md) holding whatever heading and speed the state started with.
+
+### What is per-aircraft, and what is shared
+
+This is the part worth reading twice, because the split is not obvious and it decides what you can and cannot express.
+
+| on each `Agent` | shared by the whole run |
+|---|---|
+| where it is | conflict detection |
+| what it can do (`Performance`) | conflict resolution |
+| how it moves (`Kinematics`) | recovery criterion |
+| what it is trying to do (`Autopilot`) | the CNS models — navigation, communication, surveillance |
+| | the wind |
+
+The idea behind the line: **the left column is the aircraft, the right column is the airspace it is flying in.** A multirotor and a fixed-wing genuinely are different vehicles, so they carry their own physics and their own limits. But separation rules, and the datalink everyone talks over, are properties of the *system* rather than of any one aircraft — so there is one of each, handed to the run.
+
+With:
+
+**You can fly a mixed fleet.** Give one `Agent` a `Multirotor` with an `M600` envelope and another a `FixedWing` with `SMALL_FIXEDWING`, and they will fly side by side under their own physics. [A first run](first-run.md) does exactly that.
+
+**You cannot give two aircraft different resolvers.** There is one detector, one resolver and one recovery criterion for the whole run, so every aircraft reasons the same way. A mixed fleet is mixed in *airframe*, not in separation logic. This is done assuming you want to test the same separation algorithm accross the fleet.
+
+### Saying it in an experiment
+
+`run_fleet` takes a list of `Agent`s, so a mixed fleet is a single line there. The [experiment runner](experiments/index.md) declares it as `airframes` — one `Airframe` per aircraft, ownship first — which replaces the single `perf`/`kinematics` rather than joining them:
+
+```python
+Methods(detector=StateBased(), resolver=MVP(1.05), recovery=PastCPA(),
+        airframes=[Airframe(M600), Airframe(SMALL_FIXEDWING, FixedWing())])
+```
+
+`Airframe` is the `Performance` and the `Kinematics` bundled, because those two have to agree — a fixed-wing on a multirotor's envelope has `phi_max = 0` and could never turn. Bundling them means a mismatched pair is rejected on the line you write it, instead of flying silently straight.
+
+!!! note "In a mixed fleet, each aircraft needs a speed its own airframe can fly"
+    The two envelopes differ — a multirotor is happy at 10 m/s and a small fixed-wing stalls below 12. The sampler sets them separately (`speed` for the ownship, `gs_intr` for the intruder), and an aircraft spawned outside its own envelope is refused rather than flown. See [the worked example](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/mixed_fleet.ipynb).
 
 ## One simulation step
 
