@@ -3,7 +3,8 @@
 services:
   docs:
     image: squidfunk/mkdocs-material:9
-    command: ["serve", "--dev-addr=0.0.0.0:8000"]
+    # The stock image lacks mkdocs-redirects, so install it before serving.
+    entrypoint: ["sh", "-c", "pip install -q mkdocs-redirects && exec mkdocs serve --dev-addr=0.0.0.0:8000"]
     environment:
       # Serve at http://localhost:8000/ locally (production keeps the subpath).
       SITE_URL: "http://localhost:8000/"

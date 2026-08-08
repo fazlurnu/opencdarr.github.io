@@ -11,7 +11,7 @@ doing; it says nothing about when, or whether, it will happen.
 
 | Item | Area | Status | Effort | Champion | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Rare-event estimator pages | Docs | In progress | M | @fazlurnu | Running a simulation and validation, under [Estimators](estimators/rare-event/index.md) |
+| Rare-event estimator pages | Docs | In progress | M | @fazlurnu | Running a simulation and validation, under [Estimators](handbook/estimators/rare-event/index.md) |
 | Experiment declaration layer | Experiments | In progress | L | @fazlurnu | Sweep declared, not scripted — one row per condition |
 | Vertical manoeuvres in resolution | CR | Idea | L | — | Resolvers are horizontal-only today |
 | Non-cooperative intruders | Environments | Idea | M | — | Traffic that neither broadcasts nor resolves |

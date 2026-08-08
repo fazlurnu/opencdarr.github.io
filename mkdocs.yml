@@ -46,59 +46,66 @@ theme:
     - navigation.indexes
 
 nav:
-  - Intro: index.md
-  - Installation: installation.md
-  - How it works: how-it-works.md
-  - A first run: first-run.md
-  - Modules:
-      - modules/index.md
-      - Kinematics:
-          - modules/kinematics/index.md
-          - Multirotor: modules/kinematics/multirotor.md
-          - Fixed-wing: modules/kinematics/fixedwing.md
-      - Autopilot: modules/autopilot.md
-      - Separation Manager:
-          - modules/separation/index.md
-          - Conflict Detection: modules/separation/conflict-detection.md
-          - Conflict Resolution: modules/separation/conflict-resolution.md
-          - Recovery Criteria: modules/separation/recovery-criteria.md
+  - Home: index.md
+  - Getting started:
+      - Installation: getting-started/installation.md
+      - A first run: getting-started/first-run.md
+      - How it works: getting-started/how-it-works.md
+  - Tutorials:
+      - tutorials/index.md
+      - "L0 · Setup": tutorials/l0-setup.md
+      - "L1 · The parts": tutorials/l1-parts.md
+      - "L2 · One simulation": tutorials/l2-simulation.md
+      - "L3 · From runs to rates": tutorials/l3-rates.md
+      - "L4 · Comparing designs": tutorials/l4-comparison.md
+      - "L5 · Beyond two aircraft": tutorials/l5-traffic.md
+      - "L6 · Rare events": tutorials/l6-rare-events.md
+      - "L7 · Write your own": tutorials/l7-write-your-own.md
+      - "L8 · The full experiment": tutorials/l8-experiment.md
+  - Handbook:
+      - handbook/index.md
+      - Aircraft:
+          - handbook/aircraft/index.md
+          - Performance: handbook/aircraft/performance.md
+          - Multirotor: handbook/aircraft/multirotor.md
+          - Fixed-wing: handbook/aircraft/fixedwing.md
+          - Autopilot & mission: handbook/aircraft/autopilot.md
+      - Separation:
+          - handbook/separation/index.md
+          - Conflict detection: handbook/separation/conflict-detection.md
+          - Conflict resolution: handbook/separation/conflict-resolution.md
+          - Recovery criteria: handbook/separation/recovery-criteria.md
       - CNS:
-          - modules/cns/index.md
-          - Communication: modules/cns/communication.md
-          - Navigation: modules/cns/navigation.md
-          - Surveillance: modules/cns/surveillance.md
-      - Wind: modules/wind.md
-  - Estimators:
-      - estimators/index.md
-      - Monte Carlo: estimators/monte-carlo.md
-      - Rare-event:
-          - estimators/rare-event/index.md
-          - Running a simulation: estimators/rare-event/running.md
-          - Validation: estimators/rare-event/validation.md
-  - Scenario:
-      - scenario/index.md
-      - Pairwise conflict: scenario/pairwise.md
-      - Ring: scenario/ring.md
-      - Random traffic: scenario/random-traffic.md
-  - Experiments:
-      - experiments/index.md
-      - "Ex: pairwise conflict": experiments/example-pairwise-conflict.md
-      - "Ex: random traffic": experiments/example-random-traffic.md
+          - handbook/cns/index.md
+          - Navigation: handbook/cns/navigation.md
+          - Communication: handbook/cns/communication.md
+          - Surveillance: handbook/cns/surveillance.md
+      - Wind: handbook/wind.md
+      - Scenarios:
+          - handbook/scenarios/index.md
+          - Pairwise conflict: handbook/scenarios/pairwise.md
+          - Ring: handbook/scenarios/ring.md
+          - Random traffic: handbook/scenarios/random-traffic.md
+      - Estimators:
+          - handbook/estimators/index.md
+          - Monte Carlo: handbook/estimators/monte-carlo.md
+          - Rare-event:
+              - handbook/estimators/rare-event/index.md
+              - Running a simulation: handbook/estimators/rare-event/running.md
+              - Validation: handbook/estimators/rare-event/validation.md
+      - Experiments:
+          - handbook/experiments/index.md
+          - "Case study: pairwise conflict": handbook/experiments/example-pairwise-conflict.md
+          - "Case study: random traffic": handbook/experiments/example-random-traffic.md
 # Hidden for now. To publish it, restore this nav entry and drop the matching
 # line from exclude_docs below.
-#      - Reproducibility: experiments/reproducibility.md
+#          - Reproducibility: handbook/experiments/reproducibility.md
+# Temporary home: this section folds into the Handbook (contract sections) and
+# Tutorials L7 (write your own) as the restructure lands.
   - Build your own:
       - build-your-own/index.md
-      - Performance: build-your-own/performance.md
-      - Kinematics: build-your-own/kinematics.md
-      - Autopilot: build-your-own/autopilot.md
-      - Separation Manager:
-          - build-your-own/separation-manager/index.md
-          - Conflict Detection: build-your-own/separation-manager/conflict-detection.md
-          - Conflict Resolution: build-your-own/separation-manager/conflict-resolution.md
-          - Recovery Criteria: build-your-own/separation-manager/recovery-criteria.md
+      - Separation Manager: build-your-own/separation-manager/index.md
       - CNS:
-          - build-your-own/cns/index.md
           - Communication: build-your-own/cns/communication.md
           - Navigation: build-your-own/cns/navigation.md
       - Experiments:
@@ -112,7 +119,50 @@ nav:
 # search entry.
 exclude_docs: |
   future-work.md
-  experiments/reproducibility.md
+  handbook/experiments/reproducibility.md
+
+plugins:
+  - search  # listing any plugin disables the defaults, so search must stay explicit
+  # Every pre-restructure URL keeps working. One entry per moved page; add a
+  # line here whenever a published page moves again.
+  - redirects:
+      redirect_maps:
+        installation.md: getting-started/installation.md
+        first-run.md: getting-started/first-run.md
+        how-it-works.md: getting-started/how-it-works.md
+        modules/index.md: handbook/index.md
+        modules/kinematics/index.md: handbook/aircraft/index.md
+        modules/kinematics/multirotor.md: handbook/aircraft/multirotor.md
+        modules/kinematics/fixedwing.md: handbook/aircraft/fixedwing.md
+        modules/autopilot.md: handbook/aircraft/autopilot.md
+        modules/separation/index.md: handbook/separation/index.md
+        modules/separation/conflict-detection.md: handbook/separation/conflict-detection.md
+        modules/separation/conflict-resolution.md: handbook/separation/conflict-resolution.md
+        modules/separation/recovery-criteria.md: handbook/separation/recovery-criteria.md
+        modules/cns/index.md: handbook/cns/index.md
+        modules/cns/navigation.md: handbook/cns/navigation.md
+        modules/cns/communication.md: handbook/cns/communication.md
+        modules/cns/surveillance.md: handbook/cns/surveillance.md
+        modules/wind.md: handbook/wind.md
+        scenario/index.md: handbook/scenarios/index.md
+        scenario/pairwise.md: handbook/scenarios/pairwise.md
+        scenario/ring.md: handbook/scenarios/ring.md
+        scenario/random-traffic.md: handbook/scenarios/random-traffic.md
+        estimators/index.md: handbook/estimators/index.md
+        estimators/monte-carlo.md: handbook/estimators/monte-carlo.md
+        estimators/rare-event/index.md: handbook/estimators/rare-event/index.md
+        estimators/rare-event/running.md: handbook/estimators/rare-event/running.md
+        estimators/rare-event/validation.md: handbook/estimators/rare-event/validation.md
+        experiments/index.md: handbook/experiments/index.md
+        experiments/example-pairwise-conflict.md: handbook/experiments/example-pairwise-conflict.md
+        experiments/example-random-traffic.md: handbook/experiments/example-random-traffic.md
+        build-your-own/performance.md: handbook/aircraft/performance.md
+        build-your-own/kinematics.md: handbook/aircraft/index.md
+        build-your-own/autopilot.md: handbook/aircraft/autopilot.md
+        build-your-own/separation-manager/conflict-detection.md: handbook/separation/conflict-detection.md
+        build-your-own/separation-manager/conflict-resolution.md: handbook/separation/conflict-resolution.md
+        build-your-own/separation-manager/recovery-criteria.md: handbook/separation/recovery-criteria.md
+        build-your-own/cns/index.md: handbook/cns/index.md
 
 markdown_extensions:
   - admonition

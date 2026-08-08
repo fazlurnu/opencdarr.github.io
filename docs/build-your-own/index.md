@@ -4,17 +4,17 @@ Everything in OpenCDaRR that you might change is either a plain value or an inte
 
 This page builds a whole encounter that way. We start from a built-in ownship, give it an intruder whose airframe is entirely our own, run the crossing with a built-in resolver and then with a resolver we write ourselves, layer on sensing and communication uncertainty, and finish by repeating the encounter hundreds of times to read a safety rate off the aggregate. Each extensible piece also has its own reference page for the details:
 
-- **[Performance](performance.md)** — the flight envelope of an airframe.
-- **[Kinematics](kinematics.md)** — how a vehicle moves.
-- **[Autopilot](autopilot.md)** — the nominal command that follows a mission.
-- **[Separation Manager](separation-manager/index.md)** — build your own [conflict detection](separation-manager/conflict-detection.md), [resolution](separation-manager/conflict-resolution.md), and [recovery](separation-manager/recovery-criteria.md), and combine them into one object.
-- **[CNS](cns/index.md)** — navigation, communication, and surveillance.
+- **[Performance](../handbook/aircraft/performance.md)** — the flight envelope of an airframe.
+- **[Kinematics](../handbook/aircraft/index.md)** — how a vehicle moves.
+- **[Autopilot](../handbook/aircraft/autopilot.md)** — the nominal command that follows a mission.
+- **[Separation Manager](separation-manager/index.md)** — build your own [conflict detection](../handbook/separation/conflict-detection.md), [resolution](../handbook/separation/conflict-resolution.md), and [recovery](../handbook/separation/recovery-criteria.md), and combine them into one object.
+- **[CNS](../handbook/cns/index.md)** — navigation, communication, and surveillance.
 
 The scenario stays fixed throughout — two aircraft on crossing legs, spawned directly in conflict — so every change is attributable to the one piece we swap.
 
 ## An aircraft from the built-in models
 
-Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (a [`Kinematics`](kinematics.md) + a [`Performance`](performance.md) envelope), and an [`Autopilot`](autopilot.md). The ownship is a multirotor cruising north, flown by the built-in `M600` envelope and `Multirotor` model; a [`CruiseAutopilot`](autopilot.md) holds its track and speed whenever it is not avoiding.
+Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (a [`Kinematics`](../handbook/aircraft/index.md) + a [`Performance`](../handbook/aircraft/performance.md) envelope), and an [`Autopilot`](../handbook/aircraft/autopilot.md). The ownship is a multirotor cruising north, flown by the built-in `M600` envelope and `Multirotor` model; a [`CruiseAutopilot`](../handbook/aircraft/autopilot.md) holds its track and speed whenever it is not avoiding.
 
 ```python
 from opencdarr.kinematics import Multirotor
@@ -30,7 +30,7 @@ agent_copter = Agent(copter, M600, Multirotor(), CruiseAutopilot(copter.trk, cop
 
 ## Your own kinematics and performance
 
-Every airframe is two swappable values, so the intruder can be entirely your own. A [`Kinematics`](kinematics.md) is any class implementing `step`; the simplest useful one follows the commanded ground velocity and keeps the odometry — it does not even read the envelope, or account for wind, which is fine for a first sketch. Its [`Performance`](performance.md) is a heavy, slow cargo drone.
+Every airframe is two swappable values, so the intruder can be entirely your own. A [`Kinematics`](../handbook/aircraft/index.md) is any class implementing `step`; the simplest useful one follows the commanded ground velocity and keeps the odometry — it does not even read the envelope, or account for wind, which is fine for a first sketch. Its [`Performance`](../handbook/aircraft/performance.md) is a heavy, slow cargo drone.
 
 ```python
 from opencdarr.kinematics.base import Kinematics, MotionCommand, odometry_update
@@ -86,7 +86,7 @@ fig = plot_pairwise(run, rpz=50.0, title="Pairwise crossing (perfect information
 
 ## Adding a resolver
 
-The separation stack is three swappable pieces — a [detector](separation-manager/conflict-detection.md), a [resolver](separation-manager/conflict-resolution.md), and a [recovery criterion](separation-manager/recovery-criteria.md). Adding a built-in `MVP` resolver and a `PastCPA` recovery — the only two arguments that change — is enough to clear the crossing.
+The separation stack is three swappable pieces — a [detector](../handbook/separation/conflict-detection.md), a [resolver](../handbook/separation/conflict-resolution.md), and a [recovery criterion](../handbook/separation/recovery-criteria.md). Adding a built-in `MVP` resolver and a `PastCPA` recovery — the only two arguments that change — is enough to clear the crossing.
 
 ```python
 from opencdarr.cr import MVP
@@ -107,7 +107,7 @@ print(run.min_sep, run.los)   # 97.7 m  False  — clear
 
 ## Your own resolver
 
-A [resolver](separation-manager/conflict-resolution.md) is likewise just a class with a `resolve` method returning a `MotionCommand`. A deliberately crude one — hold course until an intruder is within `trigger` metres, then turn 90° right — drops straight in.
+A [resolver](../handbook/separation/conflict-resolution.md) is likewise just a class with a `resolve` method returning a `MotionCommand`. A deliberately crude one — hold course until an intruder is within `trigger` metres, then turn 90° right — drops straight in.
 
 ```python
 from opencdarr.cr.base import ConflictResolver
@@ -160,7 +160,7 @@ print(noisy_run.min_sep, noisy_run.los)   # 102.5 m  False
   <figcaption>With a 15 m / 1.5 m·s⁻¹ GNSS error each aircraft acts on a slightly wrong self-fix, so the path differs — here it clears at 102.5 m.</figcaption>
 </figure>
 
-Communication uncertainty layers on the same way. A directed [`Comm`](../modules/cns/communication.md) model gives each transmission direction its own reception probability — `COPTER→CARGO` is more reliable than the reverse — over a lognormal latency, on its own reproducible stream.
+Communication uncertainty layers on the same way. A directed [`Comm`](../handbook/cns/communication.md) model gives each transmission direction its own reception probability — `COPTER→CARGO` is more reliable than the reverse — over a lognormal latency, on its own reproducible stream.
 
 ```python
 from opencdarr.cns import Comm, lognormal_latency
@@ -225,7 +225,7 @@ Two views of the same sweep: [`plot_pairwise_montecarlo`](https://github.com/faz
 
 ## Waypoint mission
 
-Give the copter a bounded mission — a waypoint 75 s of cruise ahead — instead of an open-ended cruise, and repeat the sweep. Only the ownship's [autopilot](autopilot.md) changes.
+Give the copter a bounded mission — a waypoint 75 s of cruise ahead — instead of an open-ended cruise, and repeat the sweep. Only the ownship's [autopilot](../handbook/aircraft/autopilot.md) changes.
 
 ```python
 from opencdarr.autopilot import WaypointAutopilot
@@ -272,9 +272,9 @@ The wind now tips a couple of runs into a loss of separation. One caveat matters
   <figcaption>With wind the low tail reaches 34.8 m and a small mass falls left of the protected zone — the 2/200 losses (a ~1% rate).</figcaption>
 </figure>
 
-Two hundred runs are enough to *see* a rate near 1%, but far too few to resolve the much smaller probabilities a real safety target asks for. Estimating those needs [rare-event simulation](../estimators/rare-event/index.md).
+Two hundred runs are enough to *see* a rate near 1%, but far too few to resolve the much smaller probabilities a real safety target asks for. Estimating those needs [rare-event simulation](../handbook/estimators/rare-event/index.md).
 
-Every piece built above has its own reference page in this section and under [Modules](../modules/index.md); the [Scenario](../scenario/pairwise.md) section runs this same conflict at scale. For the same walkthrough with only the built-in models — the shortest path to a first result — see [A first run](../first-run.md).
+Every piece built above has its own reference page in this section and under [Modules](../handbook/index.md); the [Scenario](../handbook/scenarios/pairwise.md) section runs this same conflict at scale. For the same walkthrough with only the built-in models — the shortest path to a first result — see [A first run](../getting-started/first-run.md).
 
 !!! code "Run it yourself"
     Every step on this page is the notebook [`examples/handbook/build-your-own-distilled.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/build-your-own-distilled.ipynb), top to bottom — the custom airframe and resolver, each run, and all three Monte-Carlo sweeps.

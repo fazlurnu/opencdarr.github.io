@@ -1,6 +1,6 @@
 # Navigation — extending the fix
 
-[`GnssNavigation`](../../modules/cns/navigation.md) perturbs position and velocity
+[`GnssNavigation`](../../handbook/cns/navigation.md) perturbs position and velocity
 with a pluggable 2D error distribution, and can carry effects that degrade a
 receiver over time. Three things are extensible, in increasing order of effort:
 the **error shape**, a **persistent effect**, and the **model** itself.

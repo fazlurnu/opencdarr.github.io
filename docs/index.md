@@ -10,15 +10,24 @@ Write your CDaRR algorithm, get your CDaRR performance.
 
 Separation management is held to a high safety standard. ICAO commonly uses a Target Level of Safety (TLS) of approximately 5 × 10⁻⁹ fatal accidents per flight hour when evaluating en-route separation standards for manned aviation. Although the same TLS for drones doesn't exist yet, the safety expectation remains high.
 
-Before an algorithm is trusted in the air, we test it in simulation with as much of the uncertainty included as the model can carry. But verifying against a target that small with Monte Carlo simulation alone is computationally exhaustive. OpenCDaRR provides the pieces needed to run that test: a **kinematics** model, a **separation manager** framework, an environment with **CNS** uncertainty and **wind** perturbation, and a [**rare-event estimator**](estimators/rare-event/index.md) that reaches the tail with far fewer runs.
+Before an algorithm is trusted in the air, we test it in simulation with as much of the uncertainty included as the model can carry. But verifying against a target that small with Monte Carlo simulation alone is computationally exhaustive. OpenCDaRR provides the pieces needed to run that test: a **kinematics** model, a **separation manager** framework, an environment with **CNS** uncertainty and **wind** perturbation, and a [**rare-event estimator**](handbook/estimators/rare-event/index.md) that reaches the tail with far fewer runs.
 
-## Contents
+## Two ways in
 
-- **[Installation](installation.md)** — get it running.
-- **[How it works](how-it-works.md)** — the class structure and one full simulation step.
-- **[A first run](first-run.md)** — a complete mixed-fleet encounter, with and without noise.
-- **[Modules](modules/index.md)** — the swappable pieces, from vehicle [kinematics](modules/kinematics/index.md) and [autopilot](modules/autopilot.md) to the [separation manager](modules/separation/index.md) that runs conflict detection, resolution, and recovery, over the [CNS](modules/cns/index.md) layer beneath.
-- **[Estimators](estimators/index.md)** — turning many runs into one number with an interval: [Monte Carlo](estimators/monte-carlo.md) for anything you can afford to observe, and [rare-event simulation](estimators/rare-event/index.md) for the probabilities you cannot.
-- **[Scenario](scenario/index.md)** — how the pieces are exercised, from a [pairwise conflict](scenario/pairwise.md) up to a [ring](scenario/ring.md) and [random traffic](scenario/random-traffic.md).
-- **[Experiments](experiments/index.md)** — declaring what varies, running the cross-product, and reading one row per condition, with a worked comparison of two resolvers on a [pairwise conflict](experiments/example-pairwise-conflict.md) and on [random traffic](experiments/example-random-traffic.md).
-- **[Build your own](build-your-own/index.md)** — a minimal runnable example and how to add your own model.
+The documentation is built as two tracks, cross-linked page by lesson, and you will use both.
+
+- **Do, to learn.** The **[Tutorials](tutorials/index.md)** are a course: nine levels of runnable notebooks, from `pip install` to a full experiment with a report. The core lessons come to about 12 hours, and every lesson ends with a check question. If you are new to the library — or to fast-time safety simulation at all — start here, at [L0](tutorials/l0-setup.md).
+- **Read, to understand.** The **[Handbook](handbook/index.md)** explains every model: the equations, the figures, the assumptions, and the contract for replacing a piece with your own. Nothing in it needs to be run. If you are evaluating the library's modelling choices, start here.
+
+Before either: **[Installation](getting-started/installation.md)** gets it running, **[A first run](getting-started/first-run.md)** shows a complete mixed-fleet encounter in about ten minutes, and **[How it works](getting-started/how-it-works.md)** is the five-minute map of the moving parts.
+
+## What is inside
+
+- **[Aircraft](handbook/aircraft/index.md)** — a [performance envelope](handbook/aircraft/performance.md), a [multirotor](handbook/aircraft/multirotor.md) and a [fixed-wing](handbook/aircraft/fixedwing.md), and the [autopilot](handbook/aircraft/autopilot.md) that flies the mission.
+- **[Separation](handbook/separation/index.md)** — the detect → resolve → recover overlay, each stage a swappable one-method interface.
+- **[CNS](handbook/cns/index.md)** — what each aircraft actually knows about the others, and how wrong that knowledge is.
+- **[Wind](handbook/wind.md)** — the environment field every step flies through.
+- **[Scenarios](handbook/scenarios/index.md)** — a [pairwise conflict](handbook/scenarios/pairwise.md), a [ring](handbook/scenarios/ring.md), and [random traffic](handbook/scenarios/random-traffic.md).
+- **[Estimators](handbook/estimators/index.md)** — [Monte Carlo](handbook/estimators/monte-carlo.md) for anything you can afford to observe, and [rare-event simulation](handbook/estimators/rare-event/index.md) for the probabilities you cannot.
+- **[Experiments](handbook/experiments/index.md)** — declaring what varies and reading one row per condition, with finished case studies on a [pairwise conflict](handbook/experiments/example-pairwise-conflict.md) and on [random traffic](handbook/experiments/example-random-traffic.md).
+- **[Build your own](build-your-own/index.md)** — walkthroughs for supplying your own models, until the [L7 lessons](tutorials/l7-write-your-own.md) replace them.

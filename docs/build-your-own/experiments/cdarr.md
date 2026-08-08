@@ -65,7 +65,7 @@ That gap is not the interesting part — a fifteen-line rule losing to MVP is no
 
 **It is also far more sensitive to the position fix.** Tripling `pos_ci95` barely moves the reference, while ours goes 0.106 → 0.288 at 2° and 0.056 → 0.302 at 10°. A rule that switches on a threshold fires at the wrong moment when the distance it reads is wrong by tens of metres; a rule that steers along a gradient degrades more gracefully.
 
-**The medians say where each one lives.** Ours sits between 52 m and 63 m — on top of a 50 m protected zone, which is what a fixed trigger produces: start avoiding at a fixed range, finish at a fixed range. The reference holds 72–80 m and holds it *flat* across the angle axis, which is [FTR](../../modules/separation/recovery-criteria.md)'s signature — it reverts as soon as reverting is safe rather than over-holding, so it does not bank extra separation at wide angles the way `PastCPA` does.
+**The medians say where each one lives.** Ours sits between 52 m and 63 m — on top of a 50 m protected zone, which is what a fixed trigger produces: start avoiding at a fixed range, finish at a fixed range. The reference holds 72–80 m and holds it *flat* across the angle axis, which is [FTR](../../handbook/separation/recovery-criteria.md)'s signature — it reverts as soon as reverting is safe rather than over-holding, so it does not bank extra separation at wide angles the way `PastCPA` does.
 
 One honest limit on all of this: three components changed at once, so nothing here attributes the failure to any single one.
 
@@ -73,10 +73,10 @@ One honest limit on all of this: three components changed at once, so nothing he
 
 - **Find which component costs what.** Declare `detector`, `resolver` and `recovery` as three separate axes and the cross-product gives all eight combinations, including the hybrids. That isolates each swap, at the price of eight times the runs and a table that invites reading interactions 500 encounters may not resolve.
 - **Sweep your own parameter.** `Sweep([50.0, 70.0, 100.0], build=lambda t: CloseRangeAvoid(t), name="trigger")` puts your trigger distance in the table as a plottable numeric column — the fastest way to find out whether the threshold is the problem or the rule is.
-- **Look at the record, not just the rate.** `result.cell(...).min_seps` holds every encounter's achieved separation, so `P(min_sep < 25)` or a quantile is a read rather than another run — see the [Monte Carlo estimator](../../estimators/monte-carlo.md).
+- **Look at the record, not just the rate.** `result.cell(...).min_seps` holds every encounter's achieved separation, so `P(min_sep < 25)` or a quantile is a read rather than another run — see the [Monte Carlo estimator](../../handbook/estimators/monte-carlo.md).
 
 ## In the code
 
 The whole page is one notebook, [`examples/handbook/byo_cdarr.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/byo_cdarr.ipynb), which defines the three components, runs both sweeps, writes the figure and prints the table. Run it top to bottom to reproduce it.
 
-The interfaces are [`ConflictDetector`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/base.py), [`ConflictResolver`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/base.py) and [`RecoveryCriterion`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/base.py) — one abstract method each. The runner is [`experiment.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/experiment.py); for what the declaration can express, and how to read the two metrics, see [Experiments](../../experiments/index.md) and the [pairwise conflict](../../experiments/example-pairwise-conflict.md) example.
+The interfaces are [`ConflictDetector`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/base.py), [`ConflictResolver`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/base.py) and [`RecoveryCriterion`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/base.py) — one abstract method each. The runner is [`experiment.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/experiment.py); for what the declaration can express, and how to read the two metrics, see [Experiments](../../handbook/experiments/index.md) and the [pairwise conflict](../../handbook/experiments/example-pairwise-conflict.md) example.

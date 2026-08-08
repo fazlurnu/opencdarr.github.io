@@ -105,7 +105,7 @@ This generalises past these two models: **any velocity tracker that is linear be
 
 ## The honest limit
 
-Nine components changed at once, so nothing here attributes the failure to any single one. This page demonstrates that the seams compose; the [CDaRR page](cdarr.md) changes three and is correspondingly easier to reason about, and changing one at a time is the [separation manager](../separation-manager/index.md) and [CNS](../cns/index.md) pages.
+Nine components changed at once, so nothing here attributes the failure to any single one. This page demonstrates that the seams compose; the [CDaRR page](cdarr.md) changes three and is correspondingly easier to reason about, and changing one at a time is the [separation manager](../separation-manager/index.md) and [CNS](../../handbook/cns/index.md) pages.
 
 To find which component costs what, declare each as its own axis and read the cross-product — at the price of two-to-the-nth cells and a table that invites reading interactions the sample size cannot resolve.
 
@@ -113,4 +113,4 @@ To find which component costs what, declare each as its own axis and read the cr
 
 The page is one notebook, [`examples/handbook/byo_full_stack.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/byo_full_stack.ipynb), which defines all nine components, runs both sweeps, writes the figure and prints the table.
 
-The interfaces are [`ConflictDetector`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/base.py), [`ConflictResolver`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/base.py), [`RecoveryCriterion`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/base.py), [`Kinematics`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/kinematics/base.py), and `NavigationModel` / `CommunicationModel` / `SurveillanceModel` / `NoiseDistribution` in [`cns/base.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/base.py) — one abstract method each, except navigation which has [two](../../modules/cns/navigation.md#why-the-model-has-two-methods).
+The interfaces are [`ConflictDetector`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/base.py), [`ConflictResolver`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/base.py), [`RecoveryCriterion`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/base.py), [`Kinematics`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/kinematics/base.py), and `NavigationModel` / `CommunicationModel` / `SurveillanceModel` / `NoiseDistribution` in [`cns/base.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/base.py) — one abstract method each, except navigation which has [two](../../handbook/cns/navigation.md#why-the-model-has-two-methods).

@@ -94,7 +94,7 @@ Because it only reacts once the aircraft are *already* within 100 m — rather t
 
 ## Conflict resolution { #conflict-resolution }
 
-`resolve` returns a [`MotionCommand`](../../modules/kinematics/index.md#motioncommand) carrying a ground-velocity vector — `target_velocity=(v_east, v_north)` — that flows straight into the kinematics. It receives the **set** of intruders in conflict (length 1 for a pairwise encounter), so a multi-aircraft resolver composes them its own way. The default `MVP` nudges the velocity along a potential-field gradient; ours is blunter — hold course until an intruder is within 70 m, then hard-turn 90° to the right.
+`resolve` returns a [`MotionCommand`](../../handbook/aircraft/index.md#motioncommand) carrying a ground-velocity vector — `target_velocity=(v_east, v_north)` — that flows straight into the kinematics. It receives the **set** of intruders in conflict (length 1 for a pairwise encounter), so a multi-aircraft resolver composes them its own way. The default `MVP` nudges the velocity along a potential-field gradient; ours is blunter — hold course until an intruder is within 70 m, then hard-turn 90° to the right.
 
 ```python
 from collections.abc import Sequence
@@ -277,7 +277,7 @@ out = run(detector=policy, resolver=policy, recovery=policy)
   <figcaption>A monolithic policy filling all three slots (avoid within 120 m, otherwise fly the nominal read from <code>own.desired</code>). One function maps observation to command — the shape a learned controller would take. Closest approach 91.7 m.</figcaption>
 </figure>
 
-Two honest caveats. This still *rides* the resolver interface — the three-way split is nominally present even though the policy ignores it. And the resolver is only invoked for pairs the detector raises, which is why `detect` must return `True` here. The cleaner design is to make the **separation manager itself** the swappable unit, so a policy is a single implementation sitting beside the classical detect → resolve → recover orchestrator, both judged by the same [scenarios](../../scenario/index.md) and metrics. That is [the direction this layer is built to grow in](../../modules/separation/index.md) — not yet a public hook, since `run_fleet` builds the classical manager internally.
+Two honest caveats. This still *rides* the resolver interface — the three-way split is nominally present even though the policy ignores it. And the resolver is only invoked for pairs the detector raises, which is why `detect` must return `True` here. The cleaner design is to make the **separation manager itself** the swappable unit, so a policy is a single implementation sitting beside the classical detect → resolve → recover orchestrator, both judged by the same [scenarios](../../handbook/scenarios/index.md) and metrics. That is [the direction this layer is built to grow in](../../handbook/separation/index.md) — not yet a public hook, since `run_fleet` builds the classical manager internally.
 
 ## In short
 

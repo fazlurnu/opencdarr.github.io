@@ -1,6 +1,6 @@
 # Communication — extending the channel
 
-[`Comm`](../../modules/cns/communication.md) delivers a broadcast over each directed
+[`Comm`](../../handbook/cns/communication.md) delivers a broadcast over each directed
 link with a reception probability and a latency. Four ways to change what it does,
 in order of how much you have to write: the first two are configuration, the third
 adds an effect to the standard channel, and the fourth replaces the channel.
