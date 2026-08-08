@@ -420,3 +420,30 @@ html .md-footer-meta.md-typeset a:hover {
 .md-typeset .backlog__card a {
   color: var(--md-accent-fg-color);
 }
+
+/* Printed output, set apart from the code that produced it. Written in the page source as
+   ```{ .text .output } — a quieter, smaller monospace than the input block, tagged in the
+   top-left corner so the reader never has to work out which block is which. */
+.md-typeset .highlight.output {
+  position: relative;
+}
+.md-typeset .highlight.output::before {
+  content: "output";
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  padding: 0.05rem 0.35rem;
+  font-family: var(--md-code-font-family);
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+  color: var(--md-default-fg-color--light);
+  background-color: var(--md-default-fg-color--lightest);
+  border-radius: 0.1rem 0 0.1rem 0;
+}
+.md-typeset .highlight.output > pre > code {
+  padding-top: 1.1rem;
+  font-size: 0.6rem;
+  line-height: 1.5;
+  color: var(--md-default-fg-color--light);
+}

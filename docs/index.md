@@ -10,16 +10,7 @@ Write your CDaRR algorithm, get your CDaRR performance.
 
 Separation management is held to a high safety standard. ICAO commonly uses a Target Level of Safety (TLS) of approximately 5 × 10⁻⁹ fatal accidents per flight hour when evaluating en-route separation standards for manned aviation. Although the same TLS for drones doesn't exist yet, the safety expectation remains high.
 
-Before an algorithm is trusted in the air, we test it in simulation with as much of the uncertainty included as the model can carry. But verifying against a target that small with Monte Carlo simulation alone is computationally exhaustive. OpenCDaRR provides the pieces needed to run that test: a **kinematics** model, a **separation manager** framework, an environment with **CNS** uncertainty and **wind** perturbation, and a [**rare-event estimator**](handbook/estimators/rare-event/index.md) that reaches the tail with far fewer runs.
-
-## Two ways in
-
-The documentation is built as two tracks, cross-linked page by lesson, and you will use both.
-
-- **Do, to learn.** The **[Tutorials](tutorials/index.md)** are a course: nine levels of runnable notebooks, from `pip install` to a full experiment with a report. The core lessons come to about 12 hours, and every lesson ends with a check question. If you are new to the library — or to fast-time safety simulation at all — start here, at [L0](tutorials/l0-setup.md).
-- **Read, to understand.** The **[Handbook](handbook/index.md)** explains every model: the equations, the figures, the assumptions, and the contract for replacing a piece with your own. Nothing in it needs to be run. If you are evaluating the library's modelling choices, start here.
-
-Before either: **[Installation](getting-started/installation.md)** gets it running, **[A first run](getting-started/first-run.md)** shows a complete mixed-fleet encounter in about ten minutes, and **[How it works](getting-started/how-it-works.md)** is the five-minute map of the moving parts.
+Before an algorithm is trusted in the air, we test it in simulation with as much of the uncertainty included as the model can carry. But verifying against a target that small with Monte Carlo simulation alone is computationally exhaustive. OpenCDaRR provides the pieces needed to run that test: a **kinematics** model, a **separation manager** framework, an environment with **CNS** uncertainty and **wind** perturbation, and a **rare-event estimator** that reliably reaches the tail probability with far fewer runs.
 
 ## What is inside
 

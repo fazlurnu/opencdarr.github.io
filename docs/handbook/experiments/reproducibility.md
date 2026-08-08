@@ -28,8 +28,8 @@ Two consequences for an experiment:
 - **Each condition is its own seeded fan-out.** Thus two conditions are different in their declared
   levels and in nothing else.
 - **`n_jobs` has no effect on the numbers.** It spreads the conditions over processes, and the
-  conditions are independent by construction, thus it is a scheduling choice only. It needs the
-  `parallel` extra, and the components must be picklable. A lambda that is held on a component
+  conditions are independent by construction, thus it is a scheduling choice only. It runs on the
+  core install, and the components must be picklable. A lambda that is held on a component
   instance is not picklable.
 
 To divide one condition into chunks, refer to

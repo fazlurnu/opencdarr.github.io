@@ -95,6 +95,6 @@ This trial is intentionally quick: `dt = 0.5 s`, 2000 particles, and 8 replicati
 Those are the settings of the [validation](validation.md) sweep. No other part of the code changes.
 
 !!! code "Run it yourself"
-    Each cell on this page comes from [`examples/handbook/rare_event_ips.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/rare_event_ips.ipynb). Run the notebook from the start to the end to reproduce the numbers. It is a quick trial, and it needs approximately two minutes. Install the examples first with `pip install -e ".[examples]"`, because the `examples` extra adds `joblib` for the parallel replications.
+    Each cell on this page comes from [`examples/handbook/rare_event_ips.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/rare_event_ips.ipynb). Run the notebook from the start to the end to reproduce the numbers. It is a quick trial, and it needs approximately two minutes. Install the examples first with `pip install -e ".[examples]"`, because the notebook plots its results with `matplotlib`. `joblib`, for the parallel replications, is already in the core install.
 
 This recipe becomes the [L6 · Rare events](../../../tutorials/l6-rare-events.md) lessons; until those notebooks land, this page is the walkthrough.

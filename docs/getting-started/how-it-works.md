@@ -54,4 +54,4 @@ The table below summarises the interface and role of each of the modules. Note t
 | [`Autopilot`](../handbook/aircraft/autopilot.md) | Produce the nominal command that tracks the mission |
 </div>
 
-The [next page](first-run.md) simulates a pairwise encounter, two aircraft flying toward a conflict and avoiding it, and shows what the noise and wind can change.
+The [next page](first-run.md) simulates a pairwise encounter, two aircraft flying toward a conflict and avoiding it, and then puts three aircraft in conflict at the same time.
