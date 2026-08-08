@@ -103,7 +103,7 @@ def with_bias(base, east, north):
 
 A distribution is memoryless: every fix is an independent draw. When degradation
 has to **persist** — a receiver that loses satellites and stays degraded, an
-urban canyon, a slow drift — the model needs state between ticks, and that is a
+urban canyon, a slow drift — the model needs state between timesteps, and that is a
 `NavEffect`.
 
 It has three methods:
@@ -112,7 +112,7 @@ It has three methods:
   so an absent key means "nothing has happened to that aircraft yet" and no
   roster is needed up front.
 - `evolve(own, aircraft, elapsed, rng)` — advance over `elapsed` seconds, called
-  once per tick over the whole fleet before any aircraft measures. It receives
+  once per timestep over the whole fleet before any aircraft measures. It receives
   whole `AircraftState` values, not just ids, so an effect can depend on *where*
   an aircraft is.
 - `quality(own, aircraft_id)` — the degradation right now, as a `NavQuality`. It
@@ -132,7 +132,7 @@ from opencdarr.cns import NavEffect, NavQuality
 
 @dataclass(frozen=True)
 class CanyonRoster:
-    """Which aircraft were inside the canyon at the last tick."""
+    """Which aircraft were inside the canyon at the last timestep."""
 
     inside: frozenset = frozenset()
 
@@ -168,7 +168,7 @@ nothing, and several effects compose by multiplying.
 !!! note "An effect that draws must draw a constant number of times"
     Two effects with different parameters must consume the same randomness, or a
     parameter sweep shifts the measurement draws underneath it and the cells stop
-    being comparable. `GnssOutage` makes exactly one draw per aircraft per tick
+    being comparable. `GnssOutage` makes exactly one draw per aircraft per timestep
     whatever its health and whatever its rates, including zero — see
     [`hazard.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/hazard.py)
     for the shared `toggle` helper that enforces it. An effect that draws nothing,
@@ -186,7 +186,7 @@ nothing, and several effects compose by multiplying.
 When the effect contract cannot express what you need — a model with its own
 filter state, a completely different sensor — subclass `NavigationModel` and
 return your own `NavState` subclass from `initial_state()`. `measure` then
-receives your state type on **every** tick including the first, so you never have
+receives your state type on **every** timestep including the first, so you never have
 to detect and upgrade a bare state by hand.
 
 ```python
@@ -216,7 +216,7 @@ Assert your own type rather than falling back to an `isinstance` check that
 upgrades a bare state. A model written that way fails loudly if the seam
 regresses, instead of quietly working around it.
 
-!!! note "Run it yourself"
+!!! code "Run it yourself"
     The [navigation notebook](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/navigation.ipynb)
     executes every example on this page, including the containment and draw-count
     checks.

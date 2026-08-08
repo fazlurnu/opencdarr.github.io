@@ -44,7 +44,7 @@ Everything outside the bundle — the seed, the base config, the swept geometry 
 
 <figure markdown="span">
   ![Two panels against crossing angle. Left, P(LoS): both reference curves lie flat along zero across the whole axis, while the two 'mine' curves sit far above them — the 10 metre one running 0.11, 0.10, 0.06 and rising to 0.20 at 30 degrees, the 30 metre one from 0.29 up to 0.44. Right, median minimum separation: the reference pair holds a flat band between 72 and 80 metres, while the 'mine' pair declines from about 63 and 58 metres at 2 degrees to 56 and 52 metres at 30 degrees, approaching the 50 metre protected-zone line.](../../assets/img/byo-cdarr-response.png)
-  <figcaption>P(LoS) and median achieved separation against crossing angle, 500 encounters per point, for the two stacks. Solid is a 10 m position fix, dashed 30 m; shaded bands are 95% Wilson intervals.</figcaption>
+  <figcaption>P(LoS) and median achieved separation against crossing angle, 500 encounters per point, for the two stacks. Solid is a 10 m position fix, dashed 30 m.</figcaption>
 </figure>
 
 The reference clears essentially everything: **0.000 to 0.006** across the grid, with zero losses in 500 encounters in five of the eight cells. The hand-written stack loses separation in **5.6% to 43.8%** of them.
@@ -79,4 +79,4 @@ One honest limit on all of this: three components changed at once, so nothing he
 
 The whole page is one notebook, [`examples/handbook/byo_cdarr.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/byo_cdarr.ipynb), which defines the three components, runs both sweeps, writes the figure and prints the table. Run it top to bottom to reproduce it.
 
-The interfaces are [`ConflictDetector`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/base.py), [`ConflictResolver`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/base.py) and [`RecoveryCriterion`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/base.py) — one abstract method each. The runner is [`experiment.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/experiment.py); for what the declaration can express, and how to read the two metrics, see [Experiments](../../experiments/index.md) and the [resolver comparison](../../experiments/example-resolver-comparison.md).
+The interfaces are [`ConflictDetector`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/base.py), [`ConflictResolver`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/base.py) and [`RecoveryCriterion`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/base.py) — one abstract method each. The runner is [`experiment.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/experiment.py); for what the declaration can express, and how to read the two metrics, see [Experiments](../../experiments/index.md) and the [pairwise conflict](../../experiments/example-pairwise-conflict.md) example.

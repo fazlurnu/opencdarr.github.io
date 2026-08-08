@@ -277,7 +277,7 @@ out = run(detector=policy, resolver=policy, recovery=policy)
   <figcaption>A monolithic policy filling all three slots (avoid within 120 m, otherwise fly the nominal read from <code>own.desired</code>). One function maps observation to command — the shape a learned controller would take. Closest approach 91.7 m.</figcaption>
 </figure>
 
-Two honest caveats. This still *rides* the resolver interface — the three-way split is nominally present even though the policy ignores it. And the resolver is only invoked for pairs the detector raises, which is why `detect` must return `True` here. The cleaner design is to make the **separation manager itself** the swappable unit, so a policy is a single implementation sitting beside the classical detect → resolve → recover orchestrator, both judged by the same [environments](../../environments/index.md) and metrics. That is [the direction this layer is built to grow in](../../modules/separation/index.md) — not yet a public hook, since `run_fleet` builds the classical manager internally.
+Two honest caveats. This still *rides* the resolver interface — the three-way split is nominally present even though the policy ignores it. And the resolver is only invoked for pairs the detector raises, which is why `detect` must return `True` here. The cleaner design is to make the **separation manager itself** the swappable unit, so a policy is a single implementation sitting beside the classical detect → resolve → recover orchestrator, both judged by the same [scenarios](../../scenario/index.md) and metrics. That is [the direction this layer is built to grow in](../../modules/separation/index.md) — not yet a public hook, since `run_fleet` builds the classical manager internally.
 
 ## In short
 

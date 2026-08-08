@@ -18,10 +18,10 @@ Nothing is special-cased. The runner takes the objects and where they came from 
 
 ## What feeds what
 
-Once per tick, the nine components form one chain:
+Once per timestep, the nine components form one chain:
 
 ```
-true AircraftState                      <- LaggedRotor.step produced it last tick
+true AircraftState                      <- LaggedRotor.step produced it last timestep
    |
    +-> DriftingGnss.evolve  ---------->  NavState      (the drifting bias, advanced once)
    +-> DriftingGnss.measure ---------->  Message       (a noisy self-fix, timestamped)
@@ -69,7 +69,7 @@ STACKS = {
 
 <figure markdown="span">
   ![Two panels against crossing angle, four curves each. Left, P(LoS): both reference curves lie flat along zero from 10 to 90 degrees, while the two 'mine' curves climb from about 0.30 at 10 degrees to 0.80 at 90. Right, median minimum separation: the reference pair rises steeply from 83 metres at 10 degrees to about 300 at 90, while the 'mine' pair falls from 60 metres to 41, crossing below the 50 metre protected-zone line between 10 and 45 degrees.](../../assets/img/byo-full-stack.png)
-  <figcaption>P(LoS) and median achieved separation against crossing angle, 500 encounters per point, for the two stacks. Solid is calm, dashed a 14 m/s wind; shaded bands are 95% Wilson intervals.</figcaption>
+  <figcaption>P(LoS) and median achieved separation against crossing angle, 500 encounters per point, for the two stacks. Solid is calm, dashed a 14 m/s wind.</figcaption>
 </figure>
 
 The reference never loses separation in any of the six cells. The hand-written stack loses it in **30% to 80%** of encounters, and its median drops **below the protected zone** at 45° and 90° — 45.0 m and 40.6 m against a 50 m zone. The median encounter is a breach.

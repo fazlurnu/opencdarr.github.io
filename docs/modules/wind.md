@@ -1,73 +1,73 @@
 # Wind
 
-Wind is the one part of the environment that reaches inside the kinematics. It is not one of the swappable interfaces — it is a **field the loop threads into every step**, the same category as the timestep. Like the [CNS](cns/index.md) layer, it is something the world imposes on the aircraft rather than a choice the aircraft makes; unlike CNS, it acts on the *truth*, bending the path each airframe actually flies.
+Wind is the one part of the environment that acts inside the kinematics. It is not one of the replaceable interfaces. It is a **field that the loop puts into each step**, in the same category as the timestep. Like the [CNS](cns/index.md) layer, the world applies the wind to the aircraft, and the aircraft does not select it. Unlike CNS, the wind acts on the *ground truth*, and it bends the path that each airframe flies.
 
-A [`WindField`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/wind.py) is a steady, uniform, horizontal wind — a single velocity vector, the same everywhere and at every instant. It is a read-only input passed to `Kinematics.step`, never stored on an aircraft, and it defaults to `NO_WIND` (calm), so a run without wind is byte-for-byte what it was before wind existed. Gusts, shear, and any field that varies in space or time are deliberately left out; `WindField` is the seam they would slot behind later.
+A [`WindField`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/wind.py) is a steady, uniform, horizontal wind. It is one velocity vector, the same at each position and at each time. It is a read-only input to `Kinematics.step`, and no aircraft holds it. Its default value is `NO_WIND`, which is calm air. Thus a run without wind gives the same result as a run before this library had wind. Gusts, shear, and a field that changes in space or in time are deliberately not included. `WindField` is the seam for these fields at a later time.
 
 ## The one relation
 
-Everything follows from a single vector sum: an aircraft's velocity over the ground is the velocity it flies through the air, plus the wind.
+All the behaviour comes from one vector sum. The velocity of an aircraft over the ground is the velocity through the air, plus the wind.
 
 $$\vec{V}_{\text{ground}} = \vec{V}_{\text{air}} + \vec{V}_{\text{wind}}$$
 
-What makes the two airframes behave differently under the *same* wind is which side of that equation each one controls and limits. A vehicle's [performance envelope](../build-your-own/performance.md) — its top speed — bounds the **airspeed** term. The multirotor is usually commanded a **ground** velocity; the fixed-wing flies a fixed **airspeed**. So the same wind shows up in each airframe's motion in a different place.
+The two airframes behave differently in the *same* wind, because each airframe controls and limits a different side of that equation. The [performance envelope](../build-your-own/performance.md) of a vehicle is its top speed, and it limits the **airspeed** term. The multirotor usually receives a command for a **ground** velocity. The fixed-wing flies a constant **airspeed**. Thus the same wind has a different effect on the motion of each airframe.
 
-Wind is named the way meteorology names it — by the bearing it blows *from* — so a "north wind" (from 0°) pushes the air toward the south. `WindField.from_met(coming_from, speed)` builds one from that convention; in the figures below the faint red arrows are the wind **velocity vector**, pointing the way the air moves.
+Meteorology gives the name of a wind from the bearing that it blows *from*. Thus a "north wind" (from 0°) moves the air to the south. `WindField.from_met(coming_from, speed)` makes a wind from that convention. In the figures below, the faint red arrows are the wind **velocity vector**, and they point in the direction of the air movement.
 
 ## Fixed-wing: a circle in the air is a trochoid over the ground
 
-A fixed-wing flies a constant airspeed at a bank-limited heading. A steady turn is therefore a clean circle *in the air*, but the wind carries that whole circle downwind as it is drawn — so **over the ground the path is a trochoid**, each loop displaced by `wind × turn-period`.
+A fixed-wing flies a constant airspeed at a heading with a bank limit. Thus a steady turn is a clean circle *in the air*. The wind moves that full circle downwind during the turn. Thus **the path over the ground is a trochoid**, and the wind moves each loop by `wind × turn-period`.
 
-The wind's effect on the fixed-wing is the kinematic point-mass model of [Reyner and Liem](https://www.mdpi.com/2504-446X/10/5/337)[^rl], the same coordinated-turn kinematics PX4's fixed-wing controller uses — OpenCDaRR takes the model, not their path planner. In the inertial frame ($x$ east, $y$ north, angles clockwise from north), the aircraft flies its true airspeed $V_{\text{TAS}}$ at heading $\psi$ and turns by banking $\phi$, with the wind added onto the ground velocity:
+The wind effect on the fixed-wing uses the kinematic point-mass model of [Reyner and Liem](https://www.mdpi.com/2504-446X/10/5/337)[^rl]. The fixed-wing controller of [PX4](https://docs.px4.io/main/en/ros/offboard_control) uses the same coordinated-turn kinematics. OpenCDaRR takes the model, but it does not take their path planner. In the inertial frame ($x$ east, $y$ north, angles clockwise from north), the aircraft flies its true airspeed $V_{\text{TAS}}$ at the heading $\psi$. It turns with the bank angle $\phi$. The equations add the wind to the ground velocity:
 
 $$\dot{x} = V_{\text{TAS}}\sin\psi + w_x, \qquad \dot{y} = V_{\text{TAS}}\cos\psi + w_y, \qquad \dot{\psi} = \frac{g\tan\phi}{V_{\text{TAS}}}$$
 
-Two consequences fall out of that wind term. The ground speed follows the wind triangle — fastest downwind, slowest upwind:
+Two results come from that wind term. First, the ground speed follows the wind triangle. It is fastest downwind and slowest upwind:
 
 $$V_{\text{GS}} = \sqrt{V_{\text{TAS}}^2 + V_{\text{WS}}^2 - 2\,V_{\text{TAS}}\,V_{\text{WS}}\cos(\psi - \theta_{wa})}$$
 
-and to make good a ground course $\chi$ the aircraft must **crab** into the wind by
+Second, to make good a ground course $\chi$, the aircraft must **crab** into the wind by
 
 $$\theta_w = \psi - \chi = \arcsin\!\left(\frac{V_{\text{WS}}}{V_{\text{TAS}}}\sin(\theta_{wa} - \chi)\right)$$
 
-where $V_{\text{WS}}$ is the wind speed and $\theta_{wa}$ the bearing it comes from. At calm both wind terms vanish, so $\psi = \chi$ and $V_{\text{GS}} = V_{\text{TAS}}$ — the airframe reduces to still-air flight exactly.
+In these equations, $V_{\text{WS}}$ is the wind speed and $\theta_{wa}$ is the bearing that the wind comes from. In calm air the two wind terms are zero. Thus $\psi = \chi$ and $V_{\text{GS}} = V_{\text{TAS}}$, and the airframe flies exactly as it flies in still air.
 
 <figure markdown="span">
-  ![A 3x3 grid of a fixed-wing's ground track in a continuous turn, one panel per wind bearing plus a no-wind panel; with no wind the track is a closed circle, and under each wind it becomes a looping trochoid drifting in the direction the background wind-vector arrows point](../assets/img/wind-fixedwing.png)
-  <figcaption>A fixed-wing in a continuous max-bank turn, one panel per wind direction (the faint arrows show the wind velocity). With no wind the ground track closes into a circle; under wind it becomes a trochoid, drifting downwind one turn-period at a time. Its ground speed swings between airspeed ± wind speed — fastest downwind, slowest upwind — so it crabs to hold a ground course and can never hold its speed constant.</figcaption>
+  ![A 3x3 grid of the ground track of a fixed-wing in a continuous turn. There is one panel for each wind bearing, and one panel with no wind. With no wind, the track is a closed circle. Under each wind, the track becomes a trochoid with loops, and it moves in the direction of the wind-vector arrows in the background.](../assets/img/wind-fixedwing.png)
+  <figcaption>A fixed-wing in a continuous turn at maximum bank, with one panel for each wind direction. The faint arrows show the wind velocity. With no wind, the ground track is a closed circle. Under wind, the track is a trochoid, and it moves downwind by one turn-period at a time. The ground speed changes between the airspeed plus the wind speed and the airspeed minus the wind speed. It is fastest downwind and slowest upwind. Thus the fixed-wing crabs to hold a ground course, and it cannot hold a constant speed</figcaption>
 </figure>
 
-The consequence that matters for separation: a fixed-wing's **ground speed depends on its heading**. Commanded a ground course, it holds that course by crabbing into the wind, but its speed along it shifts with direction — which, as we will see, moves the timing of a conflict.
+One result is important for the separation. The **ground speed of a fixed-wing depends on its heading**. With a command for a ground course, the fixed-wing holds that course, and it crabs into the wind. But its speed along that course changes with the direction, and this change moves the time of a conflict.
 
 ## Multirotor: the envelope is on airspeed
 
-A multirotor is commanded a ground velocity, but its top speed limits the **airspeed** it can fly. So whether the wind is visible in its track comes down to one comparison — the airspeed the command *requires* against the airspeed the vehicle *has*. Being a holonomic point, it can fly its airspeed vector in any direction up to $V_{\max}$: to make good a commanded ground velocity $\vec{V}_g$ it flies the airspeed $\vec{V}_g - \vec{V}_{\text{wind}}$, clamped to the envelope, so its true ground velocity is
+A multirotor receives a command for a ground velocity, but its top speed limits the **airspeed** that it can fly. Thus one comparison decides if the wind is visible in the track. This comparison is the airspeed that the command *needs* against the airspeed that the vehicle *has*. A multirotor is a holonomic point, and it can fly its airspeed vector in any direction up to $V_{\max}$. To make good a commanded ground velocity $\vec{V}_g$, it flies the airspeed $\vec{V}_g - \vec{V}_{\text{wind}}$ with a limit at the envelope. Thus its true ground velocity is
 
 $$\vec{V}_{\text{ground}} = \operatorname{clip}_{\lVert\,\cdot\,\rVert \le V_{\max}}\!\left(\vec{V}_g - \vec{V}_{\text{wind}}\right) + \vec{V}_{\text{wind}}$$
 
-While the required airspeed stays inside the envelope the clip does nothing and $\vec{V}_{\text{ground}} = \vec{V}_g$ exactly — the wind is fully cancelled. Once it saturates, the leftover wind is what drifts the vehicle.
+While the necessary airspeed stays in the envelope, the limit has no effect, and $\vec{V}_{\text{ground}} = \vec{V}_g$ exactly. The multirotor cancels the wind fully. When the airspeed saturates, the remainder of the wind moves the vehicle downwind.
 
 <figure markdown="span">
-  ![Two panels of a multirotor commanded to fly north through a crosswind; with wind below its top speed the ground track is a straight northward line, and with wind above its top speed the track is blown off to a downwind diagonal, over background wind-vector arrows](../assets/img/wind-multirotor.png)
-  <figcaption>A multirotor commanded 5 m/s north through a crosswind. Below its top speed (left) it crabs into the wind and holds the commanded ground track exactly — the wind is invisible in the track. Above its top speed (right) the airspeed clamps, the drift can no longer be cancelled, and the track is blown downwind.</figcaption>
+  ![Two panels of a multirotor with a command to fly north through a crosswind. With a wind below its top speed, the ground track is a straight line to the north. With a wind above its top speed, the wind moves the track to a downwind diagonal. Wind-vector arrows are in the background of the two panels.](../assets/img/wind-multirotor.png)
+  <figcaption>A multirotor with a command to fly north at 5 m/s through a crosswind. Below its top speed (left), it crabs into the wind and holds the commanded ground track exactly. The wind is not visible in the track. Above its top speed (right), the airspeed reaches its limit, the multirotor cannot cancel the drift, and the wind moves the track downwind</figcaption>
 </figure>
 
-Below the envelope the multirotor meets its ground command to the metre and the wind never shows in the track. Above it, the airspeed saturates and the vehicle drifts — gracefully, and honestly: the shortfall is reported in the state, not hidden. The sharpest version of this is holding a point: a multirotor can **hover into a wind** and null its ground speed to zero, as long as the wind stays under its top speed — something a fixed-wing, which can never stop, cannot do.
+Below the envelope, the multirotor holds its ground command to the metre, and the wind never shows in the track. Above the envelope, the airspeed saturates and the vehicle drifts. The drift is smooth, and the state reports the shortfall instead of a hidden error. The strongest example is a hold at one point. A multirotor can **hover into a wind** and hold its ground speed at zero, while the wind stays below its top speed. A fixed-wing cannot stop, so it cannot do this.
 
 ## Detect-and-avoid under wind
 
-Separation management mostly holds up under wind because a **uniform** wind adds the *same* drift to both aircraft, and the separation stack decides on the wind-blown **ground** frame — which is exactly the geometry it should act on. So the wind cancels in the relative motion. What is left is each airframe's wind-relative performance, and — combined with asymmetric situational awareness — a minor chance of loss of separation.
+Separation management usually operates correctly under wind, for two reasons. A **uniform** wind adds the *same* drift to the two aircraft. The separation stack also decides in the wind-blown **ground** frame, which is the correct geometry for that decision. Thus the wind cancels in the relative motion. The remainder is the wind-relative performance of each airframe. Together with asymmetric situational awareness, this remainder gives a small probability of a loss of separation.
 
 <figure markdown="span">
-  ![A fixed-wing crossing conflict resolved in still air and in a crosswind; the left panel shows the ground tracks bending and crabbing under wind near the closest approach with the protected-zone circle, and the right panel shows both separation curves reaching their minimum above the 50 m protected zone](../assets/img/wind-daa.png)
-  <figcaption>A fixed-wing crossing conflict, resolved in still air and in a 6 m/s wind (MVP + Past-CPA). The ground tracks crab and bend under wind (left), and because ground speed shifts with heading the closure arrives sooner — but the manoeuvre still opens the miss past the protected zone (right). Here the wind widens the miss; other bearings tighten it. Either way it clears.</figcaption>
+  ![A crossing conflict between two fixed-wing aircraft, resolved in still air and in a crosswind. The left panel shows the ground tracks, which bend and crab under wind near the closest approach, with the circle of the protected zone. The right panel shows the two separation curves, and each curve has its minimum above the protected zone of 50 m.](../assets/img/wind-daa.png)
+  <figcaption>A crossing conflict between fixed-wing aircraft, resolved in still air and in a wind of 6 m/s (MVP and Past-CPA). The ground tracks crab and bend under wind (left). The ground speed changes with the heading, so the closure occurs earlier. The manoeuvre still opens the miss distance above the protected zone (right). This wind increases the miss distance, and other bearings decrease it. In the two conditions the aircraft stay clear</figcaption>
 </figure>
 
-A multirotor absorbs a uniform wind almost completely — it crabs the wind out and its encounters are nearly wind-invariant. A fixed-wing pays a small, bearing-dependent residual: because its ground speed varies with heading, a wind along the track widens the miss while a crosswind tightens it. On its own, wind is a *margin* effect — the miss moves by metres. Combined with asymmetric situational awareness, that margin erosion can tip a run into an actual loss of separation: in the [200-run Monte Carlo sweep](../first-run.md#wind) with a 10 m/s wind and GNSS self-noise, 2 of 200 runs lost separation (closest miss 34.8 m, inside the 50 m protected zone), against zero losses in the same sweep without wind. The large wind hazards, gusts and shear and anything that varies across the airspace, are exactly what a uniform field leaves out.
+A multirotor absorbs a uniform wind almost completely. It crabs the wind out, and its encounters are almost independent of the wind. A fixed-wing has a small residual that depends on the bearing. Its ground speed changes with the heading. Thus a wind along the track increases the miss distance, and a crosswind decreases it. Alone, the wind is a *margin* effect, and the miss distance moves by metres. Together with asymmetric situational awareness, that loss of margin can cause an actual loss of separation. In the [200-run Monte Carlo sweep](../first-run.md#wind) with a wind of 10 m/s and GNSS self-noise, 2 of the 200 runs lost separation. The closest miss was 34.8 m, which is inside the protected zone of 50 m. The same sweep without wind had no loss of separation. A uniform field does not include the large wind hazards, which are gusts, shear, and each field that changes across the airspace.
 
 ## In the code
 
-`WindField` lives in [`opencdarr/wind.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/wind.py). It is passed to an encounter through one argument — `run_encounter(..., wind=field)` or `run_fleet(..., wind=field)` — and threaded into each `Kinematics.step`, so turning wind on is a one-line change to any run:
+`WindField` is in [`opencdarr/wind.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/wind.py). One argument gives the wind to an encounter, `run_encounter(..., wind=field)` or `run_fleet(..., wind=field)`. The loop then puts the field into each `Kinematics.step`. Thus one line switches the wind on in any run:
 
 ```python
 from opencdarr.wind import WindField
@@ -76,10 +76,13 @@ wind = WindField.from_met(coming_from_deg=270.0, speed=6.0)  # 6 m/s from the we
 # outcome = run_fleet(agents, ..., wind=wind)
 ```
 
-The default everywhere is `NO_WIND`. The figures on this page are drawn by [`scripts/handbook/wind.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/scripts/handbook/wind.py).
+The default value everywhere is `NO_WIND`. Without a `wind=` argument, each airframe flies in still air, and the ground velocity is equal to the air velocity.
 
-[^rl]: Reyner and Liem, *Energy-Efficient Trochoidal Path Planning for Unmanned Aircraft Under Wind and Performance Constraints*, Drones **2026**, 10, 426. OpenCDaRR re-derives only its kinematic point-mass model (Eqs 1–9) — the coordinated-turn yaw and wind vector-sum kinematics — never its path planner.
+**The kinematics hold the wind effect**, because `WindField` is a field and not an interface. Thus a wind that changes in space or in time is a new `Kinematics` implementation, not a new wind class. The airframe reads the field in its own `step`. To model a different wind effect, refer to [Build your own → Kinematics](../build-your-own/kinematics.md).
 
-## Your own wind model
+[`scripts/handbook/wind.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/scripts/handbook/wind.py) makes the three figures on this page.
 
-A different wind effect can be modelled the same way — see [Build your own → Kinematics](../build-your-own/kinematics.md).
+!!! code "Run it yourself"
+    The last section of [`examples/handbook/a_first_run.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/a_first_run.ipynb) adds a wind to a run that is complete in all other parts. It gives the 200-run sweep and the two losses of separation above.
+
+[^rl]: Reyner and Liem, *Energy-Efficient Trochoidal Path Planning for Unmanned Aircraft Under Wind and Performance Constraints*, Drones **2026**, 10, 426. OpenCDaRR uses only the kinematic point-mass model (Eqs 1–9), which is the coordinated-turn yaw and the wind vector sum. It does not use the path planner.

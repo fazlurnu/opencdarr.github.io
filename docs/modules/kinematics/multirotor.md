@@ -1,36 +1,37 @@
 # Multirotor
 
-The multirotor is a **holonomic point mass**. Its velocity can point in any direction and change direction in a single bounded step, and it can slow, stop, and hover. Facing is separate from travel, so the nose heading (`yaw`) can point one way while the vehicle moves another, the way a camera drone holds a subject while flying sideways. We use the DJI M600 envelope — top speed `v_max` 18 m/s, isotropic acceleration `a_x` 5 m/s², and yaw rate 90 °/s. These limits are a `Performance` value, so you can [Build your own → Performance](../../build-your-own/performance.md).
+The multirotor is a **holonomic point mass**. Its velocity can point in any direction and change direction in a single bounded step, and it can slow, stop, and hover. Facing is separate from travel, so the nose heading (`yaw`) can point one way while the vehicle moves another. This library uses the assumed DJI M600 envelope, with top speed `v_max` 18 m/s, isotropic acceleration `a_x` 5 m/s², and yaw rate 90 °/s. These limits are a `Performance` value, so you can [Build your own → Performance](../../build-your-own/performance.md).
 
 ## Equation of motion
 
-The state advanced each step is the ground velocity $\mathbf{v} = (v_E, v_N)$ and the position. Given a target ground velocity $\mathbf{v}_c$ read from the command, the velocity moves straight toward it under the acceleration limit, after the target is clamped to top speed.
+Each step the model advances the ground velocity $\mathbf{v} = (v_E, v_N)$ and the position. The target ground velocity $\mathbf{v}_c$ is first read from the command and clamped to top speed.
 
 $$ \mathbf{v}_t = \operatorname{clip}_{\lVert\cdot\rVert}\!\left(\mathbf{v}_c,\; v_{\max}\right) $$
 
+Then the velocity moves straight toward that target, under the acceleration limit.
+
 $$ \mathbf{v}' = \mathbf{v} + \operatorname{clip}_{\lVert\cdot\rVert}\!\left(\mathbf{v}_t - \mathbf{v},\; a_x\,\Delta t\right) $$
 
-Here $\operatorname{clip}_{\lVert\cdot\rVert}(\mathbf{u}, m)$ scales a vector down to magnitude $m$ when it is longer and leaves it otherwise. Position then advances by a great-circle step of $\lVert\mathbf{v}'\rVert\,\Delta t$ along the new track. Because the bound is on the velocity **vector**, a right-angle change of direction is one bounded step rather than a turn-rate-limited arc, and a zero target brings the vehicle to a hover.
+Here $\operatorname{clip}_{\lVert\cdot\rVert}(\mathbf{u}, m)$ scales a vector down to magnitude $m$ when it is longer and leaves it otherwise. Position then advances by a great-circle step of $\lVert\mathbf{v}'\rVert\,\Delta t$ along the new track. Because the bound is on the velocity *vector*, a right-angle change of direction is one bounded step rather than a turn-rate-limited arc, and a zero target brings the vehicle to a hover.
 
-The nose heading is a separate channel. It turns toward a commanded `target_yaw`, or integrates a commanded `target_yawspeed`, under the yaw-rate limit, taking the shortest way round and snapping onto the target once it is within a single step. It never feeds back into the velocity.
+The nose heading is a separate channel. It turns toward a commanded `target_yaw`, or integrates a commanded `target_yawspeed`, under the yaw-rate limit. It takes the shortest way round and snaps onto the target once it is within a single step. It never feeds back into the velocity.
 
 $$ \psi' = \psi + \operatorname{clip}\!\left(\psi_c - \psi,\; \pm\,\dot\psi_{\max}\,\Delta t\right) $$
 
-Under wind the same limits act on **airspeed** rather than ground speed. The vehicle solves for the airspeed vector it must fly to meet the commanded ground velocity and limits that, so a feasible command is met by crabbing and an infeasible one drifts downwind. At zero wind airspeed equals ground speed and the equations above hold as written.
+Under wind the same limits act on airspeed rather than ground speed. The vehicle solves for the airspeed vector it must fly to meet the commanded ground velocity, then limits that. A feasible command is therefore met by crabbing, and an infeasible one drifts downwind.
 
 ## MotionCommand
 
-A `MotionCommand` is a [PX4](https://docs.px4.io/main/en/ros/offboard_control)-style setpoint with many optional channels, and each kinematics model reads only the ones its vehicle understands. For the multirotor the command has **two independent axes** — a translation channel that says where to go, and an optional yaw channel that says where the nose points. The two never re-couple, which is why a multirotor can fly one way while looking another.
+For the multirotor a [`MotionCommand`](index.md#motioncommand) has two independent axes. First a translation channel that says where to go, then an optional yaw channel that says where the nose points. The two never re-couple, which is why a multirotor can fly one way while looking another.
 
-**Translation.** One of three channels, in priority order.
+**Translation.** Three channels. A `target_velocity` is flown as it arrives, and the other two are read first.
 
-- **`target_position`**, a point given as latitude and longitude. Fly straight to it and hover, capping speed by the stopping-distance law $\sqrt{2\,a_x\,r}$ at range $r$ so the vehicle stops on the point.
-- **`target_body_velocity`**, a velocity in the nose frame (forward, right), resolved to the world through the current yaw.
-- **`target_velocity`**, an inertial ground velocity $(v_E, v_N)$, the resolver's native output.
+- **`target_position`**. The vehicle flies straight to it and hovers, capping speed by the stopping-distance law $\sqrt{2\,a_x\,r}$ at range $r$ so it stops on the point.
+- **`target_body_velocity`**. Resolved to the world through the current yaw.
 
-**Yaw.** Optional, and it rides alongside any translation channel. `target_yaw` points at an absolute heading, `target_yawspeed` spins at a rate, and neither steers the velocity. Channels a multirotor does not have — course, airspeed, bank — are ignored.
+**Yaw.** Optional, and it rides alongside any translation channel. `target_yaw` points at an absolute heading, `target_yawspeed` spins at a rate, and neither steers the velocity.
 
-Every example below drives the real model from a hover with the same one-line step.
+Every example below drives the real model from a hover, always with the same one-line step.
 
 ```python
 from opencdarr.kinematics import Multirotor, MotionCommand
@@ -41,11 +42,11 @@ command = MotionCommand(...)                      # one of the cases below
 state = kinematics.step(state, command, M600, dt=0.5)    # advance one step from an AircraftState
 ```
 
-The grey arrows in every figure are the **nose** (`yaw`), sampled along the track. Where they line up with the path, facing follows travel. Where they do not, the two are decoupled.
+The grey arrows in every figure are the nose (`yaw`), sampled along the track. Where they line up with the path, facing follows travel. Where they do not, the two are decoupled.
 
 ### Inertial velocity — `target_velocity`
 
-An inertial ground velocity is a world-frame vector, so the yaw does not steer it. All three commands fly due north, and only the nose changes.
+All three commands below fly due north, and only the nose changes.
 
 ```python
 MotionCommand(target_velocity=(0.0, 15.0))                        # nose follows travel
@@ -60,7 +61,7 @@ MotionCommand(target_velocity=(0.0, 15.0), target_yawspeed=45.0)  # nose spinnin
 
 ### Body velocity — `target_body_velocity`
 
-Body forward is along the nose, so here the yaw **does** steer the travel. The same three yaw modes now change the path.
+Body forward is along the nose, so here the yaw *does* steer the travel. The same three yaw modes now change the path.
 
 ```python
 MotionCommand(target_body_velocity=(15.0, 0.0))                       # forward along the nose
@@ -74,8 +75,6 @@ MotionCommand(target_body_velocity=(15.0, 0.0), target_yawspeed=45.0) # forward 
 </figure>
 
 ### Position — `target_position`
-
-A position command flies to a point and hovers. Like inertial velocity, the path is yaw-independent, and the yaw only turns the nose.
 
 ```python
 MotionCommand(target_position=(lat, lon))                        # go-to and hover
@@ -102,13 +101,5 @@ MotionCommand(target_velocity=(0.0, 0.0))                      # decelerate to a
   <figcaption>Left, both a position and a velocity are set, so position wins and the velocity is ignored. Right, a zero velocity from a 15 m/s cruise decelerates to a stop within the stopping distance.</figcaption>
 </figure>
 
-A command that carries no channel this vehicle can use is a programming error, and the model says so rather than guessing.
-
-```python
-MotionCommand()   # nothing set
-# ValueError: MotionCommand has no target_velocity: this channel requires a ground-velocity
-#             vector ... An under-specified command for this vehicle is a programming error.
-```
-
-!!! note "Run it yourself"
+!!! code "Run it yourself"
     Every figure on this page is generated by [`examples/handbook/kinematics_multirotor.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/kinematics_multirotor.ipynb) — the same commands shown above, driving the real `Multirotor` from a hover.

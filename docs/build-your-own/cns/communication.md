@@ -18,7 +18,7 @@ BroadcastSchedule.at_rate(2.0)      # the same thing, in Hz
 ```
 
 The default schedule starts every aircraft at `t = 0`, so the whole fleet updates on
-the same tick. Two settings break that up — a per-aircraft `phase` offset, and a
+the same timestep. Two settings break that up — a per-aircraft `phase` offset, and a
 per-transmission `jitter` of \(U(-j, +j)\) added to each gap, which is the slot
 dithering real ADS-B uses. Jitter leaves the mean cadence unchanged:
 
@@ -65,14 +65,14 @@ comm = Comm(reception_prob=1.0, latency=bimodal_latency(0.05, 1.2, p_slow=0.15))
 
 Draw from the generator you are handed rather than from a global source, so the run
 stays reproducible from its seed. A distribution that draws **nothing** is fine —
-`constant_latency` is exactly that — but note it changes how much randomness a tick
+`constant_latency` is exactly that — but note it changes how much randomness a timestep
 consumes, so a run using it is not stream-comparable with one that draws.
 
 ## Your own link gate
 
 A `LinkGate` adds one effect to the standard channel. It answers a single question,
 *may this broadcast be offered on this directed link right now*, and carries whatever
-state it needs to answer it across ticks. Gates **compose**: a link is offered only
+state it needs to answer it across timesteps. Gates **compose**: a link is offered only
 if every gate admits it, so a radio failure and a transmit duty cycle are two gates
 rather than a new class for the combination.
 
@@ -125,7 +125,7 @@ that *modulates* the probability leaves the draw in place, and belongs in
 **Draw a constant number of times in `evolve`, if you draw at all.** `RadioHealth`
 makes its two draws per aircraft every step whatever the current health and whatever
 the rates, including when a rate is zero. That keeps the stream position a function
-of the roster and the tick count rather than of the failure history, so sweeping a
+of the roster and the timestep count rather than of the failure history, so sweeping a
 rate moves the outages without shifting the reception and latency draws underneath
 them.
 
@@ -140,7 +140,7 @@ retransmission protocol, a bandwidth budget shared across the fleet — replace 
 channel itself. Subclass `CommunicationModel` and implement `step`, plus
 `initial_state` if the model needs memory of its own.
 
-A shared budget of one delivery per tick, fleet-wide:
+A shared budget of one delivery per timestep, fleet-wide:
 
 ```python
 from dataclasses import dataclass
@@ -173,7 +173,7 @@ class TokenBucket(CommunicationModel):
 `step` must be **pure**: thread the state in and return a new one rather than
 mutating it, so a cloned run can never write through to its parent. Returning your
 own `CommState` subclass from `initial_state` is what puts the model's memory in
-place before the first tick — a model written this way fails loudly on a missing
+place before the first timestep — a model written this way fails loudly on a missing
 `initial_state` rather than quietly working around a bare `CommState`.
 
 It then drops into the stack like any other model:
@@ -183,7 +183,7 @@ out = run_fleet(agents, communication=TokenBucket(capacity=1),
                 comm_rng=generator(comm_seq), **cdr)
 ```
 
-!!! note "Run it yourself"
+!!! code "Run it yourself"
     All four extension points are worked end to end in
     [`examples/handbook/communication.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/communication.ipynb),
     alongside each of the channel's own settings.

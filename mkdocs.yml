@@ -68,10 +68,6 @@ nav:
           - Navigation: modules/cns/navigation.md
           - Surveillance: modules/cns/surveillance.md
       - Wind: modules/wind.md
-  - Environments:
-      - environments/index.md
-      - Pairwise conflict: environments/pairwise.md
-      - Multi-aircraft conflict: environments/multi-aircraft.md
   - Estimators:
       - estimators/index.md
       - Monte Carlo: estimators/monte-carlo.md
@@ -79,10 +75,18 @@ nav:
           - estimators/rare-event/index.md
           - Running a simulation: estimators/rare-event/running.md
           - Validation: estimators/rare-event/validation.md
+  - Scenario:
+      - scenario/index.md
+      - Pairwise conflict: scenario/pairwise.md
+      - Ring: scenario/ring.md
+      - Random traffic: scenario/random-traffic.md
   - Experiments:
       - experiments/index.md
-      - "Ex: resolver comparison": experiments/example-resolver-comparison.md
-      - Reproducibility: experiments/reproducibility.md
+      - "Ex: pairwise conflict": experiments/example-pairwise-conflict.md
+      - "Ex: random traffic": experiments/example-random-traffic.md
+# Hidden for now. To publish it, restore this nav entry and drop the matching
+# line from exclude_docs below.
+#      - Reproducibility: experiments/reproducibility.md
   - Build your own:
       - build-your-own/index.md
       - Performance: build-your-own/performance.md
@@ -108,6 +112,7 @@ nav:
 # search entry.
 exclude_docs: |
   future-work.md
+  experiments/reproducibility.md
 
 markdown_extensions:
   - admonition

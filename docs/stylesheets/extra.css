@@ -19,13 +19,132 @@
 
 /* Logo at the top of the left sidebar (openap.dev-style).
    It lives OUTSIDE .md-sidebar__scrollwrap (see overrides/main.html), so it is a
-   fixed header and only the nav list scrolls beneath it. Material's own JS sizes
-   .md-sidebar__scrollwrap, so we must NOT add flex/height here — that would
-   override its inline height and break scrolling. */
+   fixed header and only the nav list scrolls beneath it. */
 .md-sidebar__logo {
   display: block;
   padding: 0.8rem 0.6rem 0.4rem;
   border-bottom: 0.05rem solid var(--md-default-fg-color--lightest);
+}
+
+/* Material sizes .md-sidebar__scrollwrap from JS as (sidebar height - 2 x the
+   scrollwrap's offset from the sidebar top). That offset is meant to be the
+   sidebar's own padding, but our logo sits above the scrollwrap and inflates it,
+   so the logo height comes off twice and the nav stops one logo short of the
+   bottom of the window. Lay the sidebar out as a flex column instead — logo
+   fixed, scrollwrap taking whatever is left — and override the height the JS
+   sets. min-height: 0 is what keeps the flex item shrinkable, hence scrollable. */
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    /* Material offsets the column by the header it thinks is there; ours is
+       hidden, so the column sticks flush with the top of the window. */
+    top: 0;
+    /* A full window height inside a row that starts 1.5rem down would hang past
+       the bottom of a short page, and would stretch the row on top of that. Pull
+       the column back to the window top and take its height back out of the row,
+       so it covers the window exactly and the footer keeps its place. */
+    margin-top: -1.5rem;
+    margin-bottom: -100vh;
+  }
+
+  .md-sidebar--primary .md-sidebar__logo {
+    flex: 0 0 auto;
+  }
+
+  .md-sidebar--primary .md-sidebar__scrollwrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+  }
+}
+
+/* Footer. Material ships the previous/next pair as a full-width dark band; here
+   it is a line of small text under the page, aligned with the body column. The
+   footer stays opaque and above the sidebar, so a nav that runs past the end of
+   the content is cut off at the rule instead of being drawn across the band. */
+.md-footer {
+  position: relative;
+  z-index: 1;
+  background-color: var(--md-default-bg-color);
+  color: var(--md-default-fg-color--light);
+}
+
+.md-footer__inner {
+  align-items: baseline;
+  border-top: 0.05rem solid var(--md-default-fg-color--lightest);
+  padding: 0.6rem 0.8rem 0;
+}
+
+.md-footer__link {
+  align-items: baseline;
+  margin: 0;
+  min-width: 0;
+}
+
+/* The arrows carry "previous" and "next" on their own — the words would only
+   double what the link text already says. Screen readers still get them from the
+   aria-label Material puts on the link. */
+.md-footer__direction {
+  display: none;
+}
+
+.md-footer__button {
+  margin: 0;
+  padding: 0;
+}
+
+.md-footer__button svg {
+  height: 0.8rem;
+  width: 0.8rem;
+}
+
+/* Material reserves 2.4rem of the title's width for the arrow it ships; ours is
+   a third of that, and the reservation would eat into the page name. */
+.md-footer__title {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  margin: 0;
+  max-width: none;
+  padding: 0 0.3rem;
+}
+
+/* The "Made with" line follows the same small, muted treatment. */
+.md-footer-meta {
+  background-color: transparent;
+}
+
+.md-footer-meta__inner {
+  padding: 0 0.8rem 0.8rem;
+}
+
+.md-copyright {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.6rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* The html prefix matches the weight of Material's own rule, which paints this
+   link white for a dark footer — invisible on the page background. */
+html .md-footer-meta.md-typeset a {
+  color: var(--md-default-fg-color--light);
+}
+
+html .md-footer-meta.md-typeset a:focus,
+html .md-footer-meta.md-typeset a:hover {
+  color: var(--md-accent-fg-color);
+}
+
+/* Line the footer text up with the body column, which starts one sidebar plus
+   its gutter in from each edge of the 61rem grid. */
+@media screen and (min-width: 76.25em) {
+  .md-footer__inner,
+  .md-footer-meta__inner {
+    padding-left: 13.3rem;
+    padding-right: 13.3rem;
+  }
 }
 /* Hide the redundant site-name title under the sidebar logo */
 .md-nav--primary > .md-nav__title {
@@ -48,6 +167,45 @@
 .md-typeset .col-widths td:nth-child(1) { width: 30%; }
 .md-typeset .col-widths th:nth-child(2),
 .md-typeset .col-widths td:nth-child(2) { width: 70%; }
+
+/* Figure captions read as a note under the figure, not as body text. Material sets them at the
+   body size (0.8rem); this takes them to about 85% of that, line height following along. */
+.md-typeset figure figcaption {
+  font-size: 0.68rem;
+}
+
+/* Custom "code" admonition — !!! code "Run it yourself".
+   Material ships no such type, so we define the icon (mdi-xml, the </> glyph)
+   and paint it in the brand green. */
+:root {
+  --md-admonition-icon--code: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12.89 3l1.96.4L11.11 21l-1.96-.4L12.89 3zm6.7 9L16 8.41V5.58L22.42 12 16 18.41v-2.83L19.59 12zM1.58 12L8 5.58v2.83L4.41 12 8 15.58v2.83L1.58 12z"/></svg>');
+}
+.md-typeset .admonition.code,
+.md-typeset details.code {
+  border-color: #205B20;
+}
+.md-typeset .code > .admonition-title,
+.md-typeset .code > summary {
+  background-color: rgba(32, 91, 32, 0.1);
+}
+.md-typeset .code > .admonition-title::before,
+.md-typeset .code > summary::before {
+  background-color: #205B20;
+  -webkit-mask-image: var(--md-admonition-icon--code);
+          mask-image: var(--md-admonition-icon--code);
+}
+[data-md-color-scheme="slate"] .md-typeset .admonition.code,
+[data-md-color-scheme="slate"] .md-typeset details.code {
+  border-color: #4c9c4c;
+}
+[data-md-color-scheme="slate"] .md-typeset .code > .admonition-title,
+[data-md-color-scheme="slate"] .md-typeset .code > summary {
+  background-color: rgba(76, 156, 76, 0.15);
+}
+[data-md-color-scheme="slate"] .md-typeset .code > .admonition-title::before,
+[data-md-color-scheme="slate"] .md-typeset .code > summary::before {
+  background-color: #4c9c4c;
+}
 
 /* ---------------------------------------------------------------------------
    Backlog board (docs/future-work.md).

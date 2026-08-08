@@ -1,8 +1,8 @@
 # CNS
 
-**Communication, navigation, and surveillance (CNS)** is the layer that decides *what each aircraft knows about the others*, and how imperfect that knowledge is. The separation algorithms (CDaRR) act only on what CNS delivers, never on the ground truth. What an aircraft perceives about itself and what an intruder perceives about it are not the same — a gap called **asymmetric situational awareness**. This layer models that gap as realistically as the underlying CNS systems allow.
+**Communication, navigation, and surveillance (CNS)** is the layer that decides *what each aircraft perceives about the other aircraft*. The layer also decides how incorrect that knowledge is. The separation algorithms (CDaRR) use only the data that CNS gives them. They never use the ground truth. What an aircraft perceives about itself is not the same as what an intruder perceives about it. This difference is **asymmetric situational awareness**. This layer models the difference as accurately as the CNS systems permit.
 
-The three parts form a chain, from a source aircraft's true state to the picture a receiver ends up acting on:
+The three parts make a chain. The chain starts at the ground truth of a source aircraft. The chain ends at the traffic that a receiver perceives.
 
 ```mermaid
 flowchart LR
@@ -14,21 +14,21 @@ flowchart LR
     P --> SEP([separation stack])
 ```
 
-- **[Navigation](navigation.md)** — how an aircraft measures its *own* state to broadcast. The error lives at the source and is applied once, so everyone else inherits it through the broadcast.
-- **[Communication](communication.md)** — whether that broadcast is delivered, and how late. Reception and latency, drawn independently on every directed link.
-- **[Surveillance](surveillance.md)** — what a receiver *holds* about a source as a result: the last message that link delivered, or nothing at all before first contact.
+- **[Navigation](navigation.md)** — how an aircraft measures its *own* state before it broadcasts. The error occurs at the source, and the model applies the error one time. Thus all the other aircraft get the same error through the broadcast.
+- **[Communication](communication.md)** — if the broadcast arrives, and how late it arrives. The model draws the reception and the latency independently for each directed link.
+- **[Surveillance](surveillance.md)** — the data that a receiver holds about a source. This data is the last message from that link. Before the first contact, the receiver holds no data.
 
-Each is a pluggable model with a single method; swap an implementation to change the experiment. This page is the overview — each part is covered in depth on its own page.
+Each part is a model with one method. Replace an implementation to change the experiment. This page is the overview. Each part has its own page with more data.
 
-## The whole chain, in one picture
+## The full chain in one figure
 
-Run all three together and the effect is a **position error** on what each aircraft acts on. Consider two aircraft, **i** and **j**, in conflict. Aircraft **i** is flying north-east at 10 m/s and receives **j**'s state with probability 1.0. Aircraft **j** is flying west at 5 m/s and receives **i**'s state with probability 0.7. Each measures its own state with isotropic Gaussian GNSS noise (`pos_ci95 = 10 m`), broadcasts on a jittered 1 Hz schedule, and hears the other over a link with its own latency and reception probability.
+Use all three models together. The result is a **position error** in the data that each aircraft uses. Two aircraft, **i** and **j**, are in conflict. Aircraft **i** flies to the north-east at 10 m/s. Aircraft **i** receives the state of **j** with a probability of 1.0. Aircraft **j** flies to the west at 5 m/s. Aircraft **j** receives the state of **i** with a probability of 0.7. Each aircraft measures its own state with isotropic Gaussian GNSS noise (`pos_ci95 = 10 m`). Each aircraft broadcasts on a 1 Hz schedule with jitter. Each link has its own latency and reception probability.
 
-Below is the **asymmetric situational awareness**. Each row is one aircraft's view of **itself**, of the **other**, and of their **relative position**. Every panel is sampled against the current ground truth over a long run and recentred on it. The resulting scatter is similar to what is seen in real ADS-B reception data, for instance, the observations reported by [Matthias Schäfer](https://ieeexplore.ieee.org/abstract/document/10976935).
+The figure below shows the **asymmetric situational awareness**. Each row shows one aircraft's view of **itself**, of the **other aircraft**, and of the **relative position**. The tool samples each panel against the current ground truth during a long run. The tool then puts the ground truth at the centre. The scatter is similar to the scatter in real ADS-B reception data, for example the data from [Matthias Schäfer](https://ieeexplore.ieee.org/abstract/document/10976935).
 
 <figure markdown="span">
-  ![A 2x3 grid of scatter panels of perceived position relative to ground truth at the origin. Column one, each aircraft's view of itself: a Gaussian cloud centred on the truth, no lag. Column two, its view of the other: the same cloud shifted behind the other's motion arrow — i, receiving perfectly, holds a compact cloud of the westbound j drifting a little east; j, receiving lossily, holds a far south-west-shifted, tail-heavy cloud of the faster north-east i. Column three, the relative position: the same bias but a wider cloud, because it also carries the aircraft's own self-fix error.](../../assets/img/perceived-position.png)
-  <figcaption>A complete summary of the <strong>asymmetric situational awareness</strong> that CNS uncertainty produces. Neither sees the other where it is, nor the same way the other does. The noisy relative state is what is passed to the separation algorithms</figcaption>
+  ![A 2x3 grid of scatter panels. Each panel shows the perceived position related to the ground truth at the origin. Column one shows each aircraft's view of itself. It is a Gaussian cloud with its centre on the ground truth, and it has no lag. Column two shows the view of the other aircraft. The same cloud moves to the rear of the motion arrow of the other aircraft. Aircraft i receives all the messages, and it holds a small cloud of the westbound aircraft j with a small offset to the east. Aircraft j loses messages, and it holds a cloud of the faster north-east aircraft i with a large offset to the south-west and a long tail. Column three shows the relative position. The bias is the same, but the cloud is larger, because it also contains the error in the aircraft's own position.](../../assets/img/perceived-position.png)
+  <figcaption>A full summary of the <strong>asymmetric situational awareness</strong> from CNS uncertainty. No aircraft perceives the other aircraft at its true position, and the two views are different. The separation algorithms receive this relative state with its noise</figcaption>
 </figure>
 
-Everything in that picture is explained on the **[Communication](communication.md)**, **[Navigation](navigation.md)**, and **[Surveillance](surveillance.md)** page.
+The **[Communication](communication.md)**, **[Navigation](navigation.md)**, and **[Surveillance](surveillance.md)** pages give the full explanation of this figure.

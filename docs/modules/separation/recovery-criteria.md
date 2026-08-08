@@ -1,44 +1,6 @@
 # Recovery Criteria
 
-Resolving a conflict is only half the manoeuvre. Once the ownship has turned away, something has to decide when it may stop resolving and return to its nominal plan, otherwise it would avoid forever. That decision is the recovery criterion. Each tick, for each pair it is still resolving, the [separation manager](index.md) asks the criterion a single question: whether this pair is clear enough to resume. The ownship reverts to nominal only once *every* active pair says yes, so a directed pairwise test generalises to "resume when clear of all" without the criterion itself knowing about more than one intruder.
-
-Two criteria ship, and they differ in when they are willing to let go.
-
-- [`PastCPA`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/pastcpa.py) is **reactive**: resume once the pair is already past its closest approach and no longer overlapping.
-- [`FTR`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/ftr.py) (Free-To-Revert) is **proactive**: resume the moment reverting to the nominal velocity *would* keep the pair clear, without waiting for the pass.
-
-## Past-CPA: wait until diverging
-
-Past-CPA is purely geometric. The pair is past its closest approach when it is diverging, which is when the relative position and relative velocity point the same way, and a loss of separation is the current-range test from [detection](conflict-detection.md):
-
-$$ \texttt{should\_resume} \;=\; \big(\mathbf{r}\cdot\mathbf{v} > 0\big)\ \wedge\ \neg\,\texttt{is\_los} $$
-
-An optional bouncing guard refuses to resume while tracks are near-parallel and still close to the zone, where resuming would immediately re-detect the conflict and start an oscillation. The criterion is simple and robust, but it only ever looks backward: it cannot resume until divergence has actually happened.
-
-## FTR: resume once reverting would clear
-
-FTR asks a forward question instead. It takes the ownship's own **desired** (nominal) velocity, the one it wants to return to, and checks whether flying it would keep the closest approach beyond the protected zone:
-
-$$ t_\text{cpa} = -\frac{\mathbf{r}\cdot\mathbf{v}}{|\mathbf{v}|^2}, \qquad d_\text{cpa} = \begin{cases} \lVert \mathbf{r} \rVert & t_\text{cpa} \le 0 \\ \lVert \mathbf{r} + t_\text{cpa}\,\mathbf{v} \rVert & t_\text{cpa} > 0 \end{cases} $$
-
-where $\mathbf{v}$ is the relative velocity that *would* hold if the ownship reverted. It resumes when $d_\text{cpa} > \texttt{rpz}$. The intruder's side of that relative velocity is its currently observed velocity; when intent is shared, FTR additionally checks the case where the intruder reverts to its nominal too. Because it does not wait for the pass, FTR lets go as soon as it is provably safe, not a moment later. (A third criterion, `ProbabilisticFTR`, is the same forward check made under measurement uncertainty, resuming only when reverting clears the zone with a required confidence.)
-
-## The two, head-on and near-parallel
-
-Recovery timing is the whole difference, and it depends on the crossing angle. Below are two no-noise cases: a 180 degree head-on that closes fast, and a 5 degree near-parallel conflict that closes slowly, the regime where "wait until diverging" is at its weakest.
-
-The scenario is the same in both, and worth stating plainly. Two aircraft (both M600 multirotors, 12 m/s, protected zone 50 m) are placed on a collision course, zero miss distance. **Both aircraft manoeuvre**: detection, resolution, and recovery run independently for each side, directed, so each resolves against the other and both turn away. The resolver is [MVP](conflict-resolution.md) with a **1.05 margin**, so they clear to 5% beyond the protected zone (about 52.5 m), not merely to its edge. Each run starts from a 10 second nominal lead-in, both flying straight before the conflict comes within the look-ahead and the avoidance begins.
-
-<figure markdown="span">
-  ![A 2x2 grid, rows for the 180 degree head-on and the 5 degree near-parallel conflict. Left column, ground tracks with the ownship solid and the intruder dashed, coloured by criterion, the resolving stretch drawn opaque and the nominal stretch faded, with both starting positions marked. Right column, separation over time from t = 0 with the resolving window shaded. In the head-on the aircraft turn hard apart and the tracks fan out; in the near-parallel case they barely deviate. In both, Past-CPA holds the avoidance longer than FTR and settles to a larger miss.](../../assets/img/crr-pastcpa-vs-ftr.png)
-  <figcaption>Past-CPA against FTR at two crossing angles (no noise). <strong>Left column, the ground tracks</strong>: ownship solid, intruder dashed, coloured by criterion; the stretch drawn <strong>opaque is where each is resolving</strong>, the faded stretches are nominal flight (the 10 s lead-in and the flight after reverting). Both aircraft turn away, mirror-image. <strong>Right column, the separation</strong> from t = 0, with each criterion's resolving window shaded. <strong>Top, the 180 degree head-on</strong>: the conflict is detected 10 s in, FTR reverts early at 31 s and clears to 52 m (the margin), while Past-CPA waits until the pair is diverging at 52 s and <strong>over-holds</strong> to a 104 m miss. <strong>Bottom, the 5 degree near-parallel conflict</strong>: the aircraft barely turn (the detour is metres, so the east axis is exaggerated) and the slow closing makes the divergence signal Past-CPA waits for very weak, so it holds all the way to 188 s and an 88 m miss, where FTR has already reverted at 112 s to a tight 50 m.</figcaption>
-</figure>
-
-That near-parallel corner is also where Past-CPA's late resume turns fragile once noise enters: a weak, noise-sensitive divergence signal is exactly the wrong thing to wait on, and across a sweep of crossing angles it is near-parallel where Past-CPA actually loses separation. FTR's forward check clears every angle at a tight, near-constant margin.
-
-## In the code
-
-The criteria live in [`opencdarr/crr/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/crr). Each takes the ownship, the perceived intruder, and the protected-zone radius, and returns whether it is safe to resume:
+Resolving a conflict is only half the manoeuvre. Once the ownship has turned away, something has to decide when it may stop resolving and return to its nominal plan, otherwise it would avoid forever. **The input** to the recovery criterion is the ownship state, the perceived intruder state, and the protected-zone radius `rpz`. Then, **the output** is a single `bool`, whether this pair is clear enough to resume.
 
 ```python
 from opencdarr.crr import PastCPA, FTR
@@ -47,10 +9,42 @@ recovery = FTR()                        # or PastCPA(bouncing_guard=True)
 resume = recovery.should_resume(own, perceived_intr, rpz=50.0)
 ```
 
-The figure on this page is drawn by [`scripts/handbook/separation.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/scripts/handbook/separation.py):
+The [separation manager](index.md) asks that question each timestep, once for every pair the ownship is still resolving. The ownship reverts to nominal only once *every* active pair says yes. A directed pairwise test therefore generalises to resume when clear of all, without the criterion itself knowing about more than one intruder.
 
-```
-PYTHONPATH=. python scripts/handbook/separation.py
-```
+This library provides two criteria, and they differ in when they are willing to let go.
 
-To add a recovery criterion of your own behind the same interface, see [Build your own → Recovery Criteria](../../build-your-own/separation-manager/recovery-criteria.md).
+## PastCPA, wait until diverging
+
+[`PastCPA`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/pastcpa.py) resumes once the pair is already past its closest approach and no longer overlapping. The test is purely geometric. A pair is past its closest approach when it is diverging, which is when the relative position and the relative velocity point the same way, and the overlap test is the current-range one from [detection](conflict-detection.md).
+
+$$ \texttt{should\_resume} \;=\; \big(\mathbf{r}\cdot\mathbf{v} > 0\big)\ \wedge\ \neg\,\texttt{is\_los} $$
+
+An optional `bouncing_guard` refuses to resume while tracks are near-parallel and still close to the zone, where resuming would immediately re-detect the conflict and start an oscillation. It cannot resume until divergence has actually happened.
+
+## FTR, resume once reverting would clear
+
+[`FTR`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/ftr.py) (Free-To-Revert) is built based on [Schaberg's thesis](https://repository.tudelft.nl/record/uuid:529b6868-f0b4-49e3-94c3-82e52ebe0c7d). It asks a forward question and reads the ownship's own desired velocity, carried on the state as `desired`, and checks whether flying it would keep the closest approach beyond the protected zone.
+
+$$ t_\text{cpa} = -\frac{\mathbf{r}\cdot\mathbf{v}}{|\mathbf{v}|^2}, \qquad d_\text{cpa} = \begin{cases} \lVert \mathbf{r} \rVert & t_\text{cpa} \le 0 \\ \lVert \mathbf{r} + t_\text{cpa}\,\mathbf{v} \rVert & t_\text{cpa} > 0 \end{cases} $$
+
+Here $\mathbf{v}$ is the relative velocity that *would* hold if the ownship reverted, and FTR resumes when $d_\text{cpa} > \texttt{rpz}$. The intruder's side of that relative velocity is its currently observed velocity. When intent is shared, FTR also checks the case where the intruder reverts to its nominal too. Because it does not wait for the pass, FTR lets go as soon as it is provably safe.
+
+In [our paper](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6675278), we explain that this is similar to two-collision-cone where the resume navigation is allowed only when the relative velocity is outside two collision cones, that is built on *assuming intruder maintains its velocity* and *assuming intruder reverts to its original velocity*.
+
+## Test cases on head-on and near-parallel
+
+Recovery timing is the whole difference between them, and it depends on the crossing angle. Below are two no-noise cases, a 180 degree head-on that closes fast and a 5 degree near-parallel conflict that closes slowly. The near-parallel case is the regime where waiting for divergence is at its weakest.
+
+The scenario is the same in both. Two M600 multirotors fly at 12 m/s with a 50 m protected zone, placed on a collision course at zero miss distance. Both aircraft manoeuvre, because detection, resolution and recovery run independently for each side, so each resolves against the other and both turn away. The resolver is [MVP](conflict-resolution.md) with a 1.05 margin, so they clear to about 52.5 m rather than to the edge of the zone. Each run starts with a 10 second nominal lead-in, both flying straight before the conflict comes within the look-ahead.
+
+<figure markdown="span">
+  ![A 2x2 grid, rows for the 180 degree head-on and the 5 degree near-parallel conflict. Left column, ground tracks with the ownship solid and the intruder dashed, coloured by criterion, the resolving stretch drawn opaque and the nominal stretch faded, with both starting positions marked. Right column, separation over time from t = 0 with the resolving window shaded. In the head-on the aircraft turn hard apart and the tracks fan out; in the near-parallel case they barely deviate. In both, Past-CPA holds the avoidance longer than FTR and settles to a larger miss.](../../assets/img/crr-pastcpa-vs-ftr.png)
+  <figcaption>Past-CPA against FTR at two crossing angles (no noise). Left, the ground tracks, opaque where the aircraft is resolving. Right, the separation, with each criterion's resolving window shaded. Head-on, FTR reverts at 31 s to a 52 m miss while Past-CPA waits for divergence at 52 s and over-holds to 104 m. Near-parallel, the slow closing leaves a weak divergence signal, so Past-CPA holds to 188 s and 88 m where FTR reverted at 112 s to a tight 50 m. The east axis is exaggerated.</figcaption>
+</figure>
+
+That near-parallel corner is also where Past-CPA's late resume turns fragile once noise enters. A weak, noise-sensitive divergence signal is exactly the wrong thing to wait on, and across a sweep of crossing angles it is near-parallel where Past-CPA actually loses separation. FTR's forward check clears every angle at a tight, near-constant margin.
+
+Both criteria live in [`opencdarr/crr/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/crr). To add a criterion of your own behind the same interface, see [Build your own → Recovery Criteria](../../build-your-own/separation-manager/recovery-criteria.md).
+
+!!! code "Run it yourself"
+    The figure on this page is generated by [`examples/handbook/separation.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/separation.ipynb), which also draws the detection and resolution figures.

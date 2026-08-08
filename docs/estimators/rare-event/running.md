@@ -1,18 +1,15 @@
 # Running a simulation
 
-This page runs the estimator end to end. It builds on the [theory](index.md); for the evidence it is correct, see [validation](validation.md).
-
-!!! tip "A runnable version"
-    Every cell below is from [`examples/handbook/rare_event_ips.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/rare_event_ips.ipynb), a quick trial that runs top to bottom in about two minutes after `pip install -e ".[examples]"` (the `examples` extra adds `joblib` for the parallel replications).
+This page runs the estimator from the start to the end. It uses the [theory](index.md). For the evidence that the estimator is correct, refer to [validation](validation.md).
 
 ## What you supply
 
-The estimator is scenario-agnostic. It needs exactly two things:
+The estimator does not know the scenario. It needs two items only:
 
-- a **factory** that builds one particle — its rules (`env`) plus its initial world (`state`) — from a random seed, and
-- the **shell ladder** — a decreasing sequence of running-minimum separations ending at `rpz`.
+- a **factory** that builds one particle from a random seed — the rules of the particle (`env`) and its initial world (`state`), and
+- the **shell ladder** — a sequence of running-minimum separations that decreases and ends at `rpz`.
 
-Everything else rides the fleet interface. The scenario here is one fixed 90° crossing of two multirotors on a dead-on collision course, each with a GNSS self-fix error — the separation manager (`StateBased` + `MVP` + `PastCPA`) clears them to just outside the 50 m protected zone almost every time, and loss of separation is the thin tail where the navigation noise makes an aircraft under-clear.
+The fleet interface gives all the other items. The scenario here is one fixed 90° crossing of two multirotors on a collision course. Each aircraft has a GNSS error in its own fix. The separation manager (`StateBased` + `MVP` + `PastCPA`) moves the two aircraft to a position immediately outside the 50 m protected zone almost every time. Loss of separation is the thin tail: it occurs when the navigation noise causes an aircraft to give too small a clearance.
 
 ```python
 import time
@@ -47,34 +44,37 @@ LEVELS = [150, 135, 122, 112, 104, 97, 90, 82, 74, 68, 63, 59, 56, 54, 52, 51, 5
 
 ## Run it — replications in parallel
 
-One IPS run (`ips_once`) evolves the $N$ particles shell by shell and returns $\hat P = \prod_k (S_k/N)$. Because a single run's particles interact, the confidence interval must come from **independent replications** on separate seed subtrees — which also parallelise perfectly, one per core.
+One IPS run (`ips_once`) moves the $N$ particles forward, one shell after the other. It returns $\hat P = \prod_k (S_k/N)$. The particles of one run interact, thus one run cannot tell you how much it varies. That is why a run is **replicated** on independent seed subtrees: the replications are independent estimates of the same number, and they are also fully parallel.
+
+`tail=True` is what gives the per-aircraft number: it flies each survivor on past its first breach,
+thus the count of aircraft in a loss is measured and not assumed.
 
 ```python
 N_PARTICLES = 2000    # per shell (production uses ~10000 — see below)
-REPS = 8              # independent replications -> the confidence interval
+REPS = 8              # independent replications -> the spread between estimates
 
 results = Parallel(n_jobs=-1)(
-    delayed(ips_once)(build_initial, LEVELS, N_PARTICLES, seed)
+    delayed(ips_once)(build_initial, LEVELS, N_PARTICLES, seed, tail=True)
     for seed in replication_seeds(20260728, REPS)
 )
 est = combine_replications(results)
 
-print(f"P(LoS) = {est.prob:.2e}   95% CI [{est.ci[0]:.2e}, {est.ci[1]:.2e}]")
+print(f"P(LoS) = {est.p_los:.2e}   per aircraft")
 print(f"collapsed replications: {est.n_collapsed}/{REPS}")
 ```
 
 ```
-P(LoS) = 4.17e-05   95% CI [1.78e-05, 6.15e-05]
+P(LoS) = 4.17e-05   per aircraft
 collapsed replications: 0/8
 ```
 
 ## Reading the result
 
-Three things to look at, in order:
+Look at three items, in this sequence:
 
-- **`P ± CI`, never a bare probability.** The interval is the honest output; a point estimate for a number this small, on its own, is not to be trusted.
-- **`collapsed` must be 0.** A replication collapses when a shell ends with zero survivors, and returns $\hat P = 0$. A nonzero count means the ladder is too aggressive or `N_PARTICLES` too small; add particles or re-space shells. Treat a collapsed run as failed rather than as data — but note that *discarding* the zeros is what would bias the mean, upward, since the product estimator is unbiased only when they are counted. A collapse is a signal to re-tune the ladder and re-run, not a number to drop from an otherwise good batch.
-- **The per-shell survival fractions** are the diagnostic behind the estimate — each should sit roughly in 10–50%. A shell near 0 is about to collapse; one near 1.0 is a wasted shell.
+- **The spread between the replications.** Each replication is an independent estimate of the same number, thus the spread between them is what tells you whether the budget was sufficient. They are on `est.reps`. Two replications an order of magnitude apart mean the ladder or the particle count needs work, whatever the mean says.
+- **`collapsed` must be 0.** A replication collapses when a shell ends with zero survivors, and it returns $\hat P = 0$. A count that is more than zero shows that the ladder is too aggressive, or that `N_PARTICLES` is too small. Add particles, or put the shells at different distances. A collapsed run is a failure, and it is not data. But do not *remove* the zero values from a batch. The product estimator is unbiased only when you count them, thus removal of them makes the mean too high. A collapse is an instruction to tune the ladder again and to run the batch again.
+- **The survival fractions for each shell** are the diagnostic for the estimate. Each fraction must be between approximately 10% and 50%. A shell near 0 will collapse soon. A shell near 1.0 has no use.
 
 ```python
 good = [r for r in est.reps if r.collapsed_at is None]
@@ -86,10 +86,13 @@ for d, s in zip(levels, mean_surv):
 
 ## Scaling up
 
-This trial is deliberately quick — `dt = 0.5 s`, 2000 particles, 8 replications — so the CI is loose and the point estimate carries some discretisation bias. To turn it into a production estimate:
+This trial is intentionally quick: `dt = 0.5 s`, 2000 particles, and 8 replications. Thus the replications are far apart, and the estimate has some discretisation bias. To make it a production estimate, change three settings:
 
-- **`dt = 0.2 s`** — a finer step reduces shell overshoot (a particle jumping past a shell between ticks).
-- **more particles** (~10000) — headroom against collapse in the deep tail.
-- **more replications** — a tighter CI, and they fill more cores.
+- **`dt = 0.2 s`** — a smaller step decreases the shell overshoot. Overshoot occurs when a particle moves past a shell between two timesteps.
+- **more particles** (approximately 10000) — this gives a margin against collapse in the deep tail.
+- **more replications** — this brings the independent estimates closer together, and it also uses more cores.
 
-Those are exactly the settings behind the [validation](validation.md) sweep. Nothing else in the code changes.
+Those are the settings of the [validation](validation.md) sweep. No other part of the code changes.
+
+!!! code "Run it yourself"
+    Each cell on this page comes from [`examples/handbook/rare_event_ips.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/rare_event_ips.ipynb). Run the notebook from the start to the end to reproduce the numbers. It is a quick trial, and it needs approximately two minutes. Install the examples first with `pip install -e ".[examples]"`, because the `examples` extra adds `joblib` for the parallel replications.

@@ -274,7 +274,7 @@ The wind now tips a couple of runs into a loss of separation. One caveat matters
 
 Two hundred runs are enough to *see* a rate near 1%, but far too few to resolve the much smaller probabilities a real safety target asks for. Estimating those needs [rare-event simulation](../estimators/rare-event/index.md).
 
-Every piece built above has its own reference page in this section and under [Modules](../modules/index.md); the [Environments](../environments/pairwise.md) section runs this same conflict at scale. For the same walkthrough with only the built-in models — the shortest path to a first result — see [A first run](../first-run.md).
+Every piece built above has its own reference page in this section and under [Modules](../modules/index.md); the [Scenario](../scenario/pairwise.md) section runs this same conflict at scale. For the same walkthrough with only the built-in models — the shortest path to a first result — see [A first run](../first-run.md).
 
-!!! note "Run it yourself"
+!!! code "Run it yourself"
     Every step on this page is the notebook [`examples/handbook/build-your-own-distilled.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/build-your-own-distilled.ipynb), top to bottom — the custom airframe and resolver, each run, and all three Monte-Carlo sweeps.
