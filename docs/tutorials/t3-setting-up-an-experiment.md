@@ -218,7 +218,7 @@ res.frame()[["pos_ci95", "resolver", "p_los_run", "p_los_ac", "mean_k", "n_los",
 5      30.0       VO      0.097    0.0360   0.116     97         66.4255
 ```
 
-### The three numbers
+### T3.5.1. The three metrics
 
 Important note:
 
@@ -235,11 +235,15 @@ P(\text{LoS})_\text{ac} = \frac{\sum_r A_r}{\sum_r N_r}
 \mathbb{E}[K] = \frac{1}{R}\sum_r K_r
 $$
 
-$P(\text{LoS})_\text{run}$, the `p_los_run` column, is a probability per encounter. One pair in a loss of separation is sufficient to count the full encounter. $P(\text{LoS})_\text{ac}$, the `p_los_ac` column, is a probability per aircraft. Each aircraft
-counts one time in each encounter, and not one time for each intruder. $\mathbb{E}[K]$, the `mean_k` column, is a frequency, not a probability. Its value can be more
+* $P(\text{LoS})_\text{run}$, the `p_los_run` column, is a probability per encounter. One pair in a loss of separation is sufficient to count the full encounter. 
+
+* $P(\text{LoS})_\text{ac}$, the `p_los_ac` column, is a probability per aircraft. Each aircraft
+counts one time in each encounter, and not one time for each intruder. 
+
+* $\mathbb{E}[K]$, the `mean_k` column, is a frequency, not a probability. Its value can be more
 than 1. The denominator of $P(\text{LoS})_\text{ac}$ is a sum over the encounters. Thus the ratio stays correct if the number of aircraft changes between the encounters.
 
-For a fleet of two aircraft, the three values are equal.
+For a fleet of two aircraft, the three values are identical.
 
 **Extra note**: `list(RESOLVERS)` gives the dict's keys, and without `build` a `Sweep`'s levels go straight onto the bundle, so the run would get the string `"MVP"` where a resolver belongs and fail with `'str' object has no attribute 'resolve'`.
 
