@@ -46,5 +46,3 @@ For a single pair the two often resolve in a similar direction, but not identica
 
 A resolver of your own subclasses [`ConflictResolver`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/base.py) and implements one method, `resolve(own, intruders, rpz, preferred) -> MotionCommand`, returning the ground-velocity command that clears the conflict. It receives the **set** of intruders currently in conflict — length one in a pairwise encounter — so a multi-intruder resolver composes them its own way, as the sum-versus-union split above shows. Like the other two stages it must be pure, with no state on the object between calls. Both built-ins live in [`opencdarr/cr/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/cr) as references.
 
-!!! code "Learn by doing"
-    [L1.9 · Conflict resolution](../../tutorials/l1-parts.md) (60 min, core) computes the way out of one conflict with both resolvers and compares the manoeuvres. A resolver of your own is [L7](../../tutorials/l7-write-your-own.md).

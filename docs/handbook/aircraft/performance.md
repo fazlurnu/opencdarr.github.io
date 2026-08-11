@@ -53,5 +53,3 @@ An envelope limit only changes an encounter when the manoeuvre pushes against it
 
 The built-in envelopes `M600` (multirotor) and `SMALL_FIXEDWING` (fixed-wing) are two such values, defined in [`performance.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/performance.py). The quickest start is to copy one and change the numbers, then watch it fly.
 
-!!! code "Learn by doing"
-    [L1.3 · The performance envelope](../../tutorials/l1-parts.md) (30 min, core) describes an airframe as data and probes which limit binds when. Airframes of your own are [L7](../../tutorials/l7-write-your-own.md).

@@ -90,5 +90,3 @@ MotionCommand(target_velocity=(0.0, 0.0))                      # decelerate to a
   <figcaption>Left, both a position and a velocity are set, so position wins and the velocity is ignored. Right, a zero velocity from a 15 m/s cruise decelerates to a stop within the stopping distance.</figcaption>
 </figure>
 
-!!! code "Learn by doing"
-    [L1.5 · Kinematics: multirotor](../../tutorials/l1-parts.md) (45 min, core) drives every command on this page from a hover, cell by cell, and ends with a check question on the yaw decoupling.

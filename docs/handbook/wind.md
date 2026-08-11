@@ -75,9 +75,6 @@ WindField.from_met(coming_from_deg=270.0, speed=6.0)  # 6 m/s from the west
 
 The default value everywhere is `NO_WIND`. Without a `wind=` argument, each airframe flies in still air, and the ground velocity is equal to the air velocity.
 
-**The kinematics hold the wind effect**, because `WindField` is a field and not an interface. Thus a wind that changes in space or in time is a new `Kinematics` implementation, not a new wind class. The airframe reads the field in its own `step`. To model a different wind effect, write your own kinematics — the contract is on the [Aircraft](aircraft/index.md#the-contract) page, and [L7 · Write your own](../tutorials/l7-write-your-own.md) builds one.
-
-!!! code "Learn by doing"
-    [L1.11 · Wind](../tutorials/l1-parts.md) (40 min, core) adds a wind field to single steps of both airframes and watches which speed each one holds.
+**The kinematics hold the wind effect**, because `WindField` is a field and not an interface. Thus a wind that changes in space or in time is a new `Kinematics` implementation, not a new wind class. The airframe reads the field in its own `step`. To model a different wind effect, write your own kinematics. The contract is on the [Aircraft](aircraft/index.md#the-contract) page.
 
 [^rl]: Reyner and Liem, *Energy-Efficient Trochoidal Path Planning for Unmanned Aircraft Under Wind and Performance Constraints*, Drones **2026**, 10, 426. OpenCDaRR uses only the kinematic point-mass model (Eqs 1–9), which is the coordinated-turn yaw and the wind vector sum. It does not use the path planner.

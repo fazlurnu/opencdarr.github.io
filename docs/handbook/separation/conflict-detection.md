@@ -36,5 +36,3 @@ $$ \text{conflict} \;=\; \big(d_\text{cpa} < R\big)\ \wedge\ \big(t_\text{in} < 
 
 A detector of your own subclasses [`ConflictDetector`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/base.py) and implements one method, `detect(own, intr, rpz, t_lookahead) -> bool` — one verdict per directed pair, computed from the ownship's perceived picture. It must be **pure**: a function of its arguments only, with nothing stored on the object between calls, which is what lets a run reproduce exactly and a rare-event particle clone safely. How it decides — predictive, reactive, probabilistic — is entirely yours. `StateBased` and `is_los` live in [`opencdarr/cd/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/cd) as the reference.
 
-!!! code "Learn by doing"
-    [L1.8 · Conflict detection](../../tutorials/l1-parts.md) (40 min, core) predicts a conflict by hand and then with `StateBased`. A detector of your own is [L7](../../tutorials/l7-write-your-own.md).

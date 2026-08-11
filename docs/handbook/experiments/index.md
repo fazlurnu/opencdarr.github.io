@@ -54,7 +54,7 @@ that Monte Carlo cannot measure at a cost that is reasonable; refer to
   with the two estimators in one table.
 
 Each is a finished experiment — the question, the declaration, the figures, and the sentence the
-question deserved. They are the model answers for [L8 · The full experiment](../../tutorials/l8-experiment.md).
+question deserved.
 
 ## In the code
 
@@ -70,5 +70,3 @@ rare-event cell is one
 immediately, and so does a parameter that no component reads — a `pos_ci95` sweep with no
 navigation model is the usual example.
 
-!!! code "Learn by doing"
-    [L4 · Comparing designs](../../tutorials/l4-comparison.md) writes declarations like the one above and reads their grids honestly. [L8 · The full experiment](../../tutorials/l8-experiment.md) carries one from the question to the report.

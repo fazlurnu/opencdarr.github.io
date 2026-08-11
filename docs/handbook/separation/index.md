@@ -60,5 +60,3 @@ Each stage the manager orchestrates is an abstract base class with a single meth
 
 All three are **directed** — computed from the ownship's point of view against its perceived traffic — and **pure**, a function of their arguments only, for the same no-hidden-state reason as above. One class may implement more than one interface and fill more than one slot; [Build your own → Separation Manager](../../build-your-own/separation-manager/index.md) works that idea all the way up to a monolithic end-to-end policy.
 
-!!! code "Learn by doing"
-    [L1.8–L1.10](../../tutorials/l1-parts.md) drive the three stages one at a time, and [L2](../../tutorials/l2-simulation.md) assembles them under the manager in a full run. A stage of your own is [L7](../../tutorials/l7-write-your-own.md).

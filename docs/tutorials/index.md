@@ -1,39 +1,37 @@
 # Tutorials
 
-The [Handbook](../handbook/index.md) explains the library; this section teaches it. The tutorials are a course: nine levels of runnable notebooks that start at `pip install` and end at a full experiment with a report. Each lesson is one notebook, run from the top to the bottom, and each one ends with a check question you should be able to answer before you move on.
+The tutorials run as a series. Each one builds on the one before it:
 
-The notebooks live in the library repository, under [`examples/curriculum`](https://github.com/fazlurnu/OpenCDaRR/tree/main/examples/curriculum). Install once — that is lesson [L0.1](l0-setup.md) — then open the folder in Jupyter and work in order.
+- [T1. Under CNS uncertainty](t1-cns-uncertainty.md)
+- [T2. Using built-in estimator](t2-monte-carlo-with-config-and-scenario.md)
+- [T3. Setting up an experiment](t3-setting-up-an-experiment.md)
+- [T4. Two estimators](t4-two-estimators.md)
 
-## The two paths
+The tutorials are deliberately not organised per [`Modules`](../handbook/index.md), because that would end up as a lot of small tutorials. Instead, modifications to an existing `Module`, and implementations of your own, are included in the tutorial that needs them.
 
-Each lesson is **core** or **depth**. Core lessons carry the course from one level to the next. Depth lessons stay on one level and open a single seam further — error models that persist across steps, link gates, the geometry helpers.
+As a heads-up, here is what each one covers.
 
-| Path | Lessons | Time |
-| --- | --- | --- |
-| Short | the core lessons only | about 12 hours |
-| Full | all lessons | about 40 hours |
+**T1. Under CNS uncertainty**
 
-Do the short path first. Then come back for the depth lessons that your own work needs — after Level 2, most readers know which seam they care about.
+1. Write your own `performance` envelope and your own `kinematics`.
+2. Build a pairwise conflict with `communication` and `navigation` uncertainty in it.
+3. Run one encounter, then many, and estimate P(LoS) with your own loop.
 
-## How to work a lesson
+**T2. Using built-in estimator**
 
-1. Read the goal at the top of the level page, so you know what you are trying to be able to do.
-2. Run the notebook cell by cell, not all at once. Before each cell, predict what it will print or plot; the difference between your prediction and the output is the lesson.
-3. Answer the check question at the end without scrolling back up.
-4. When a *why* itches — why is the turn an arc, why does the resolver push sideways — follow the **Read** link on the lesson row. It goes to the handbook page that justifies the model you just drove, and that page links back here.
+1. Carry your components over from T1, and hold the numbers in a `Config` and the geometry in a `Scenario`.
+2. Estimate P(LoS) on a `pairwise` scenario with the built-in `estimate_p_los`, run in parallel over your cores.
 
-## The levels
+**T3. Setting up an experiment**
 
-| Level | Subject | Status |
-| --- | --- | --- |
-| [L0 · Setup](l0-setup.md) | Install, run one answer end to end, map the public surface. | available |
-| [L1 · The parts](l1-parts.md) | Every module called directly, no simulation loop. | available |
-| [L2 · One simulation](l2-simulation.md) | The parts assembled into a pairwise `run_fleet`. | in preparation |
-| [L3 · From runs to rates](l3-rates.md) | Many encounters, one probability. | in preparation |
-| [L4 · Comparing designs](l4-comparison.md) | More than one module varied at the same time. | in preparation |
-| [L5 · Beyond two aircraft](l5-traffic.md) | Rings, traffic density, mixed fleets. | in preparation |
-| [L6 · Rare events](l6-rare-events.md) | Where counting stops, and what replaces it. | in preparation |
-| [L7 · Write your own](l7-write-your-own.md) | A resolver, a detector, an airframe, a scenario of your own. | in preparation |
-| [L8 · The full experiment](l8-experiment.md) | From a question to a report, with everything above in service. | in preparation |
+1. Fly six heterogeneous aircraft, spawned by the `CrossingRing` scenario so they meet in the middle together.
+2. Read the world and the CDaRR stack from a configuration file with `load_run`, instead of writing them in the notebook.
+3. Sweep with `run_experiment`, one row per condition, and compare `MVP` against `VO` as the position accuracy degrades.
 
-The plan for the whole course, including the lessons not yet written, is the [curriculum document](https://github.com/fazlurnu/OpenCDaRR/blob/main/docs/curriculum.md) in the library repository.
+**T4. Two estimators**
+
+1. Write your own conflict resolution, and sweep it against the two built-in ones.
+2. Sweep the recovery criteria as well, and watch plain Monte Carlo run out of events to count.
+3. Estimate the same conditions again with the rare-event estimator, changing nothing but the `backend=` argument.
+
+The tutorials cover the breadth of what OpenCDaRR can do. The [Handbook](../handbook/index.md) explains and justifies the depth of each part.

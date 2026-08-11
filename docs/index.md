@@ -21,4 +21,4 @@ Before an algorithm is trusted in the air, we test it in simulation with as much
 - **[Scenarios](handbook/scenarios/index.md)** — a [pairwise conflict](handbook/scenarios/pairwise.md), a [ring](handbook/scenarios/ring.md), and [random traffic](handbook/scenarios/random-traffic.md).
 - **[Estimators](handbook/estimators/index.md)** — [Monte Carlo](handbook/estimators/monte-carlo.md) for anything you can afford to observe, and [rare-event simulation](handbook/estimators/rare-event/index.md) for the probabilities you cannot.
 - **[Experiments](handbook/experiments/index.md)** — declaring what varies and reading one row per condition, with finished case studies on a [pairwise conflict](handbook/experiments/example-pairwise-conflict.md) and on [random traffic](handbook/experiments/example-random-traffic.md).
-- **[Build your own](build-your-own/index.md)** — walkthroughs for supplying your own models, until the [L7 lessons](tutorials/l7-write-your-own.md) replace them.
+- **[Build your own](build-your-own/index.md)** — walkthroughs for supplying your own models.

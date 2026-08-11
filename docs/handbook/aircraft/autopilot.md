@@ -65,5 +65,3 @@ This library leaves L1 unmodified. Without wind a well-tuned L1 is what a fixed-
 
 The autopilots live in [`opencdarr/autopilot/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/autopilot), which holds [`base.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/autopilot/base.py) (the interface and `GuidanceMemory`), `cruise.py`, and `waypoint.py`. The [`Mission`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/mission.py) they consume sits beside them. Every aircraft in an encounter or a fleet carries its own autopilot; give none and the aircraft flies its initial cruise. Any guidance law can be added by honouring the same contract, whether it is a loiter that spirals in, a Dubins path planner, or a follow-the-leader rule.
 
-!!! code "Learn by doing"
-    [L1.7 · Autopilot and mission](../../tutorials/l1-parts.md) (40 min, core) flies a plan with both airframes and watches one autopilot serve the two. A guidance law of your own is [L7](../../tutorials/l7-write-your-own.md).

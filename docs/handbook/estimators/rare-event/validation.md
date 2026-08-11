@@ -33,5 +33,3 @@ The sweep shows two results:
 
 In summary: in a regime that Monte Carlo can still reach ($\sim 10^{-4}$ to $10^{-5}$), IPS gives the same results across the experiments. That is the evidence that you need before you use IPS in the more rare regimes, where Monte Carlo cannot go.
 
-!!! code "Learn by doing"
-    The anchor test on this page is a lesson of [L6 · Rare events](../../../tutorials/l6-rare-events.md): you run the two estimators on the same cell and watch the intervals overlap.

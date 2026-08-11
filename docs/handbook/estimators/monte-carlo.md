@@ -121,5 +121,3 @@ In the sweep on the [pairwise conflict](../experiments/example-pairwise-conflict
 
 **A different estimator is a different function over the same environment**, and a subclass is not necessary. `run_fleet` gives the same `advance` and `is_terminal` interface to each estimator, which is what makes the results comparable. Thus [rare-event simulation](rare-event/index.md) is a second function over that interface, and `combine_ipr` pools the results of more than one batch of the first function. To declare a sweep over either estimator, refer to [Experiments](../experiments/index.md).
 
-!!! code "Learn by doing"
-    [L1.17 · The RNG and repeatability](../../tutorials/l1-parts.md) (40 min, core) makes results repeat — the seed tree above, driven by hand. [L3 · From runs to rates](../../tutorials/l3-rates.md) turns runs into this page's numbers: the denominators, the counts, and the batch sizing.

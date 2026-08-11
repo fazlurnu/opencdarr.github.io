@@ -53,15 +53,12 @@ nav:
       - How it works: getting-started/how-it-works.md
   - Tutorials:
       - tutorials/index.md
-      - "L0 · Setup": tutorials/l0-setup.md
-      - "L1 · The parts": tutorials/l1-parts.md
-      - "L2 · One simulation": tutorials/l2-simulation.md
-      - "L3 · From runs to rates": tutorials/l3-rates.md
-      - "L4 · Comparing designs": tutorials/l4-comparison.md
-      - "L5 · Beyond two aircraft": tutorials/l5-traffic.md
-      - "L6 · Rare events": tutorials/l6-rare-events.md
-      - "L7 · Write your own": tutorials/l7-write-your-own.md
-      - "L8 · The full experiment": tutorials/l8-experiment.md
+      - "T1. Under CNS uncertainty": tutorials/t1-cns-uncertainty.md
+      - "T2. Using built-in estimator": tutorials/t2-monte-carlo-with-config-and-scenario.md
+      - "T3. Setting up an experiment": tutorials/t3-setting-up-an-experiment.md
+      - "T4. Two estimators": tutorials/t4-two-estimators.md
+# The L-series that used to sit here is gone: superseded by the T-series above,
+# its nine pages deleted and its 47 inbound references stripped from the handbook.
   - Handbook:
       - handbook/index.md
       - Aircraft:
@@ -100,8 +97,8 @@ nav:
 # Hidden for now. To publish it, restore this nav entry and drop the matching
 # line from exclude_docs below.
 #          - Reproducibility: handbook/experiments/reproducibility.md
-# Temporary home: this section folds into the Handbook (contract sections) and
-# Tutorials L7 (write your own) as the restructure lands.
+# Temporary home: this section folds into the Handbook (contract sections) as the
+# restructure lands. It used to point at Tutorials L7, which is gone.
   - Build your own:
       - build-your-own/index.md
       - Separation Manager: build-your-own/separation-manager/index.md

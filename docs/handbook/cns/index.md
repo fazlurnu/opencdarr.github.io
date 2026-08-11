@@ -33,5 +33,3 @@ The figure below shows the **asymmetric situational awareness**. Each row shows 
 
 The **[Communication](communication.md)**, **[Navigation](navigation.md)**, and **[Surveillance](surveillance.md)** pages give the full explanation of this figure.
 
-!!! code "Learn by doing"
-    [L1.12, L1.14, and L1.16](../../tutorials/l1-parts.md) drive navigation, communication, and surveillance one at a time — the same chain as the figure above, built link by link.

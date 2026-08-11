@@ -28,5 +28,3 @@ There is no measurement noise in this run. Thus the speed of the source is exact
 
 A model of your own implements [`SurveillanceModel`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/base.py) with the one method `perceived(state, receiver, source, t_now)`, and a subclass of `LastKnown` is not necessary. A model that extrapolates the last message forward, or one that holds a message for a maximum age only, is a separate implementation beside it, judged in the same runs.
 
-!!! code "Learn by doing"
-    [L1.16 · CNS: surveillance](../../tutorials/l1-parts.md) (30 min, core) reads what the separation logic reads, one timestep through the full chain. A model of your own is [L7](../../tutorials/l7-write-your-own.md).

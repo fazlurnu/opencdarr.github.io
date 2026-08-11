@@ -36,5 +36,3 @@ Today the shell ladder is fixed before the run. **Adaptive multilevel splitting*
 
 The run stays re-derivable from `config + seed + code-hash` for each of these estimators.
 
-!!! code "Learn by doing"
-    [L3 · From runs to rates](../../tutorials/l3-rates.md) works the plain estimator; [L6 · Rare events](../../tutorials/l6-rare-events.md) works the splitting one, and validates it against the first.

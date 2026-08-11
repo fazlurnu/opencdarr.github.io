@@ -46,5 +46,3 @@ That near-parallel corner is also where Past-CPA's late resume turns fragile onc
 
 A criterion of your own subclasses [`RecoveryCriterion`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/base.py) and implements one method, `should_resume(own, intr, rpz) -> bool` — `True` when this pair is clear enough to resume. It is asked per pair, and the manager reverts only once every active pair agrees, so the criterion never needs to know about more than one intruder. It must be pure, with no state on the object between calls. The built-ins — `PastCPA`, `FTR`, and `ProbabilisticFTR` — live in [`opencdarr/crr/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/crr) as references.
 
-!!! code "Learn by doing"
-    [L1.10 · Recovery](../../tutorials/l1-parts.md) (45 min, core) decides when to go back to the plan, and builds a small loop by hand — the bridge into [L2](../../tutorials/l2-simulation.md). A criterion of your own is [L7](../../tutorials/l7-write-your-own.md).

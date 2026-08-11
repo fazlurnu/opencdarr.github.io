@@ -60,5 +60,3 @@ encounter is one
 !!! code "Run it yourself"
     Run the notebook from the start to the end to reproduce each number and the two figures on
     this page.
-
-This case study is the finished form of what [L4 · Comparing designs](../../tutorials/l4-comparison.md) teaches — the MVP-against-VO comparison is its centrepiece — and a model answer for [L8 · The full experiment](../../tutorials/l8-experiment.md).

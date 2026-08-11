@@ -1,6 +1,6 @@
 # Handbook
 
-The handbook explains the library: what each model is, why it is built the way it is, what it assumes, and — where a piece is swappable — the contract a replacement must honour. Nothing on these pages needs to be run. The runnable course is the [Tutorials](../tutorials/index.md) section, and the two are linked page by lesson: come here when a lesson leaves you asking *why*, and take the "Learn by doing" pointer at the foot of a page when reading stops being enough.
+The handbook explains the library: what each model is, why it is built the way it is, what it assumes, and — where a piece is swappable — the contract a replacement must honour. Nothing on these pages needs to be run. The runnable course is the [Tutorials](../tutorials/index.md) section. Come here when a tutorial leaves you asking *why*.
 
 The chapters follow the build:
 
@@ -12,4 +12,4 @@ The chapters follow the build:
 - **[Estimators](estimators/index.md)** — from many runs to one probability with an interval, by plain counting and by rare-event splitting.
 - **[Experiments](experiments/index.md)** — declared comparisons across all of the above, with two finished case studies.
 
-Every page keeps the same shape: what the piece is, why it is built this way, where it breaks, then the contract and the lesson that drives it. [How it works](../getting-started/how-it-works.md) is the five-minute map of how the pieces connect; to replace one with code of your own, the walkthroughs under [Build your own](../build-your-own/index.md) cover the ground until the L7 lessons land.
+Every page keeps the same shape: what the piece is, why it is built this way, where it breaks, then the contract that drives it. [How it works](../getting-started/how-it-works.md) is the five-minute map of how the pieces connect. To replace one with code of your own, the walkthroughs under [Build your own](../build-your-own/index.md) cover the ground.

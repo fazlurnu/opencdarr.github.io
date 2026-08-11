@@ -125,7 +125,4 @@ In the two conditions, the affected receiver continues to **hold** the last data
 
 **Link gates** add the effects that are not the reception or the latency, and a subclass is not necessary. Each gate holds its own state, and it is possible to use more than one gate together. Thus a radio failure and a terrain mask are two gates, not a new class for the combination. To write a gate, a latency shape, a broadcast rate, or a full channel, refer to [Build your own → Communication](../../build-your-own/cns/communication.md).
 
-!!! code "Learn by doing"
-    [L1.14 · CNS: communication](../../tutorials/l1-parts.md) (60 min, core) delays, loses, and spaces out the messages, one setting at a time. [L1.15 · Link gates](../../tutorials/l1-parts.md) (40 min, depth) turns a directed link off for a physical reason. A gate, a latency shape, or a channel of your own is [L7](../../tutorials/l7-write-your-own.md).
-
 [^adsb]: The reception-probability formulation is a Bernoulli trial for each message, and it gives the geometric update-interval distribution. It follows Rahman, Ellerbroek, and Hoekstra, *Modelling ADS-B Reception Probability using OpenSky Data*, Journal of Open Aviation Science (Proceedings of the 12th OpenSky Symposium).

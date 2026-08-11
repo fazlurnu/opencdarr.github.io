@@ -44,5 +44,3 @@ This library implements two airframes. They share this interface and differ only
 
 `step` is a pure map from one state to the next. It reads the state, the command, the envelope, the timestep, and the wind, and returns the next state — no hidden state on the object, which is what lets the rare-event estimator replay and branch a trajectory. A vehicle of your own is a subclass of [`Kinematics`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/kinematics/base.py) implementing this one method, with the two built-ins as reference implementations. An envelope the vehicle cannot fly is rejected when the `Agent` is built — [Performance](performance.md) explains why.
 
-!!! code "Learn by doing"
-    [L1.1 · Aircraft state](../../tutorials/l1-parts.md) (30 min) makes one aircraft and reads its state, and [L1.4 · MotionCommand](../../tutorials/l1-parts.md) (40 min) writes every channel in the table above. [L1.2](../../tutorials/l1-parts.md) is the depth lesson on the frame and geometry. A vehicle of your own is [L7](../../tutorials/l7-write-your-own.md).

@@ -82,5 +82,3 @@ which carries its own measurement area.
     Monte-Carlo call needs approximately two minutes, and the rare-event call needs approximately
     one hour on eight cores. `cache=True` keeps one entry for each condition, thus a second run
     plots the results again and does not simulate them again.
-
-This case study is the finished form of what [L5 · Beyond two aircraft](../../tutorials/l5-traffic.md) and [L8 · The full experiment](../../tutorials/l8-experiment.md) teach — traffic density as the axis, and both estimators on one question.

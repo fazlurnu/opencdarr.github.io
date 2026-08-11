@@ -78,5 +78,3 @@ MotionCommand(target_position=C, target_loiter_radius=60.0, target_airspeed=18.0
   <figcaption>Three position modes, same start and airspeed. Left, a bare go-to steers straight at the point, with no regard for a leg. Middle, adding the leg start tracks the line with L1 — the aircraft curves onto the leg rather than heading directly at the point. Right, a loiter radius makes it orbit the point, since it cannot hover. The radius must exceed the minimum turn radius for the orbit to hold.</figcaption>
 </figure>
 
-!!! code "Learn by doing"
-    [L1.6 · Kinematics: fixed-wing](../../tutorials/l1-parts.md) (60 min, core) flies every command on this page and measures the turn radii against the $V^2$ law.

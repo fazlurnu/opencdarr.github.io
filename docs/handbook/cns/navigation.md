@@ -173,5 +173,3 @@ The score of a run uses the **true** states. The navigation error changes what t
 
 **Error shapes and `NavEffect` implementations** add the effects that `GnssNavigation` does not have, and a subclass of the model is not necessary. A shape is a function, and an effect holds its own state. Thus a receiver outage and a bias that increases with time are two effects, not a new class for the combination. To write a shape, an effect, or a full navigation model, refer to [Build your own → Navigation](../../build-your-own/cns/navigation.md).
 
-!!! code "Learn by doing"
-    [L1.12 · CNS: navigation](../../tutorials/l1-parts.md) (60 min, core) makes an aircraft measure itself with an error, one setting at a time. [L1.13 · Navigation degradation](../../tutorials/l1-parts.md) (40 min, depth) makes an error that continues across steps. A shape, an effect, or a model of your own is [L7](../../tutorials/l7-write-your-own.md).

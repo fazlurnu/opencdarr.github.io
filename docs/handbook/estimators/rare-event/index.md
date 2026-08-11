@@ -96,9 +96,6 @@ You select the ladder, and that is the primary obligation. If one shell is too f
 
 The planned improvement is **adaptive multilevel splitting** (Cérou & Guyader 2007). It selects each shell as a quantile of the current cloud, and it does not fix the shell before the run. This removes the guesswork and the risk of collapse. Each run stays reproducible: `config + seed + code-hash → (P, CI)`.
 
-!!! code "Learn by doing"
-    [L6 · Rare events](../../../tutorials/l6-rare-events.md) makes you feel where counting stops, then runs IPS end to end — the ladder, the anchor test against Monte Carlo, and the parallel batch.
-
 ## References
 
 - Blom, H. A. P., Krystul, J., Bakker, G. J., Klompstra, M. B., & Klein Obbink, B. (2007). Free flight collision risk estimation by sequential Monte Carlo simulation. In C. G. Cassandras & J. Lygeros (Eds.), *Stochastic Hybrid Systems* (pp. 249–281). CRC Press / Taylor & Francis.

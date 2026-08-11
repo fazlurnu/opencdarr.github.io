@@ -196,4 +196,4 @@ Every piece assembled above, the airframes, the autopilot, and the three parts o
 !!! code "Run it yourself"
     Every step on this page is the notebook [`examples/tutorial/L0_a_first_run.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/tutorial/L0_a_first_run.ipynb), top to bottom, and the three figures are its own output.
 
-That was the shape of an answer. The course that teaches you to build your own starts at [L0 · Setup](../tutorials/l0-setup.md) — about 12 hours of core lessons from here to a full experiment.
+That was the shape of an answer. The course that teaches you to build your own starts at [Tutorials](../tutorials/index.md).
