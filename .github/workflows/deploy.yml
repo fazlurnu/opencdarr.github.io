@@ -1,16 +1,12 @@
 name: Build & deploy
 
-# Rebuild when this site's config changes, on a daily schedule (to pick up new content
-# pushed to the OpenCDaRR repo), and on manual request. For instant rebuilds on content
-# changes, have the OpenCDaRR repo send a repository_dispatch (see README.md).
+# The site is self-contained: every page lives in docs/, so a push to main is the
+# only thing that changes what gets published. workflow_dispatch stays for manual
+# re-deploys (e.g. after changing the Pages settings).
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: "0 6 * * *"          # daily 06:00 UTC
   workflow_dispatch: {}
-  repository_dispatch:
-    types: [content-updated]
 
 permissions:
   contents: read
@@ -27,26 +23,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout site repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Checkout OpenCDaRR content
-        uses: actions/checkout@v4
-        with:
-          repository: fazlurnu/OpenCDaRR
-          ref: main
-          path: content
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements-docs.txt
-
-      - name: Assemble content (landing page + MathJax overlay)
-        run: bash scripts/prepare.sh content
 
       - name: Build site
         run: mkdocs build --strict --site-dir site
