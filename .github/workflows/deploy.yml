@@ -29,6 +29,9 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          # This repo's deps are in requirements-docs.txt; without this, the
+          # cache step looks only for requirements.txt/pyproject.toml and fails.
+          cache-dependency-path: requirements-docs.txt
 
       - name: Install dependencies
         run: pip install -r requirements-docs.txt
