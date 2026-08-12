@@ -14,11 +14,10 @@ Before an algorithm is trusted in the air, we test it in simulation with as much
 
 ## What is inside
 
-- **[Aircraft](handbook/aircraft/index.md)** — a [performance envelope](handbook/aircraft/performance.md), a [multirotor](handbook/aircraft/multirotor.md) and a [fixed-wing](handbook/aircraft/fixedwing.md), and the [autopilot](handbook/aircraft/autopilot.md) that flies the mission.
-- **[Separation](handbook/separation/index.md)** — the detect → resolve → recover overlay, each stage a swappable one-method interface.
-- **[CNS](handbook/cns/index.md)** — what each aircraft actually knows about the others, and how wrong that knowledge is.
-- **[Wind](handbook/wind.md)** — the environment field every step flies through.
-- **[Scenarios](handbook/scenarios/index.md)** — a [pairwise conflict](handbook/scenarios/pairwise.md), a [ring](handbook/scenarios/ring.md), and [random traffic](handbook/scenarios/random-traffic.md).
-- **[Estimators](handbook/estimators/index.md)** — [Monte Carlo](handbook/estimators/monte-carlo.md) for anything you can afford to observe, and [rare-event simulation](handbook/estimators/rare-event/index.md) for the probabilities you cannot.
-- **[Experiments](handbook/experiments/index.md)** — declaring what varies and reading one row per condition, with finished case studies on a [pairwise conflict](handbook/experiments/example-pairwise-conflict.md) and on [random traffic](handbook/experiments/example-random-traffic.md).
-- **[Build your own](build-your-own/index.md)** — walkthroughs for supplying your own models.
+Three sections, in the order you are likely to need them.
+
+- **[Getting started](getting-started/installation.md)** — [install the library](getting-started/installation.md), then fly [a first run](getting-started/first-run.md): two aircraft on a collision course, once with nothing switched on and once with a separation stack that clears them. [How it works](getting-started/how-it-works.md) is the five-minute map of the design principles and the parts.
+- **[Tutorials](tutorials/index.md)** — the runnable course, four lessons that each build on the one before. Write your own [performance envelope and kinematics under CNS uncertainty](tutorials/t1-cns-uncertainty.md), estimate P(LoS) [with the built-in estimator](tutorials/t2-monte-carlo-with-config-and-scenario.md), [sweep a full experiment from a configuration file](tutorials/t3-setting-up-an-experiment.md), and [reach the rare tail with two estimators](tutorials/t4-two-estimators.md).
+- **[Handbook](handbook/index.md)** — the reference behind the course: [aircraft](handbook/aircraft/index.md), [separation](handbook/separation/index.md), [CNS](handbook/cns/index.md), [wind](handbook/wind.md), [scenarios](handbook/scenarios/index.md), [estimators](handbook/estimators/index.md), and [experiments](handbook/experiments/index.md). Every page says what the piece is, why it is built that way, where it breaks, and — where it is swappable — the contract a replacement must honour.
+
+Nothing in the handbook needs to be run. The tutorials cover the breadth; the handbook explains the depth. Come to it when a tutorial leaves you asking *why*.

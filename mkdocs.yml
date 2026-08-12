@@ -57,6 +57,7 @@ nav:
       - "T2. Using built-in estimator": tutorials/t2-monte-carlo-with-config-and-scenario.md
       - "T3. Setting up an experiment": tutorials/t3-setting-up-an-experiment.md
       - "T4. Two estimators": tutorials/t4-two-estimators.md
+      - "T5. Calibrating the ladder": tutorials/t5-calibrating-the-ladder.md
 # The L-series that used to sit here is gone: superseded by the T-series above,
 # its nine pages deleted and its 47 inbound references stripped from the handbook.
   - Handbook:
@@ -97,17 +98,21 @@ nav:
 # Hidden for now. To publish it, restore this nav entry and drop the matching
 # line from exclude_docs below.
 #          - Reproducibility: handbook/experiments/reproducibility.md
-# Temporary home: this section folds into the Handbook (contract sections) as the
-# restructure lands. It used to point at Tutorials L7, which is gone.
-  - Build your own:
-      - build-your-own/index.md
-      - Separation Manager: build-your-own/separation-manager/index.md
-      - CNS:
-          - Communication: build-your-own/cns/communication.md
-          - Navigation: build-your-own/cns/navigation.md
-      - Experiments:
-          - CDaRR: build-your-own/experiments/cdarr.md
-          - Every seam at once: build-your-own/experiments/full-stack.md
+# Hidden from the nav for now. The pages still build and keep their URLs, so the
+# handbook links into this section (cns/navigation, cns/communication,
+# separation/index, handbook/index) still resolve — it is only off the sidebar.
+# To publish it again, uncomment the block below. To unpublish it *entirely*,
+# add build-your-own/ to exclude_docs and strip those four inbound links first,
+# or the strict build fails on them.
+#  - Build your own:
+#      - build-your-own/index.md
+#      - Separation Manager: build-your-own/separation-manager/index.md
+#      - CNS:
+#          - Communication: build-your-own/cns/communication.md
+#          - Navigation: build-your-own/cns/navigation.md
+#      - Experiments:
+#          - CDaRR: build-your-own/experiments/cdarr.md
+#          - Every seam at once: build-your-own/experiments/full-stack.md
 # Backlog board, hidden for now. To publish it, restore the three commented
 # lines: this nav entry, the exclude_docs entry, and javascripts/backlog.js.
 #  - Future work: future-work.md
@@ -186,4 +191,7 @@ extra_css:
 extra_javascript:
 #  - javascripts/backlog.js
   - javascripts/mathjax.js
-  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  # Pinned, not the floating "mathjax@3" tag: the unversioned URL costs an extra
+  # 302 on every cold load, and that delay is what used to lose the race against
+  # the typeset call in mathjax.js.
+  - https://unpkg.com/mathjax@3.2.2/es5/tex-mml-chtml.js
