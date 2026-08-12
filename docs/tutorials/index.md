@@ -4,7 +4,7 @@ The tutorials run as a series. Each one builds on the one before it:
 
 - [T1. Under CNS uncertainty](t1-cns-uncertainty.md)
 - [T2. Using built-in estimator](t2-monte-carlo-with-config-and-scenario.md)
-- [T3. Setting up an experiment](t3-setting-up-an-experiment.md)
+- [T3. Six aircraft in an experiment](t3-setting-up-an-experiment.md)
 - [T4. Two estimators](t4-two-estimators.md)
 - [T5. Calibrating the ladder](t5-calibrating-the-ladder.md)
 
@@ -23,7 +23,7 @@ As a heads-up, here is what each one covers.
 1. Carry your components over from T1, and hold the numbers in a `Config` and the geometry in a `Scenario`.
 2. Estimate P(LoS) on a `pairwise` scenario with the built-in `estimate_p_los`, run in parallel over your cores.
 
-**T3. Setting up an experiment**
+**T3. Six aircraft in an experiment**
 
 1. Fly six heterogeneous aircraft, spawned by the `CrossingRing` scenario so they meet in the middle together.
 2. Read the world and the CDaRR stack from a configuration file with `load_run`, instead of writing them in the notebook.
