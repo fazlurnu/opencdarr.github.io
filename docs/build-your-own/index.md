@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Build your own
 
 Everything in OpenCDaRR that you might change is either a plain value or an interface with a single method, so extending it means writing one small class (or one value) and passing it in. The loop never changes.
@@ -5,7 +9,7 @@ Everything in OpenCDaRR that you might change is either a plain value or an inte
 This page builds a whole encounter that way. We start from a built-in ownship, give it an intruder whose airframe is entirely our own, run the crossing with a built-in resolver and then with a resolver we write ourselves, layer on sensing and communication uncertainty, and finish by repeating the encounter hundreds of times to read a safety rate off the aggregate. Each extensible piece also has its own reference page for the details:
 
 - **[Performance](../handbook/aircraft/performance.md)** — the flight envelope of an airframe.
-- **[Kinematics](../handbook/aircraft/index.md)** — how a vehicle moves.
+- **[Kinematics](../handbook/aircraft/kinematics/index.md)** — how a vehicle moves.
 - **[Autopilot](../handbook/aircraft/autopilot.md)** — the nominal command that follows a mission.
 - **[Separation Manager](separation-manager/index.md)** — build your own [conflict detection](../handbook/separation/conflict-detection.md), [resolution](../handbook/separation/conflict-resolution.md), and [recovery](../handbook/separation/recovery-criteria.md), and combine them into one object.
 - **[CNS](../handbook/cns/index.md)** — navigation, communication, and surveillance.
@@ -14,7 +18,7 @@ The scenario stays fixed throughout — two aircraft on crossing legs, spawned d
 
 ## An aircraft from the built-in models
 
-Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (a [`Kinematics`](../handbook/aircraft/index.md) + a [`Performance`](../handbook/aircraft/performance.md) envelope), and an [`Autopilot`](../handbook/aircraft/autopilot.md). The ownship is a multirotor cruising north, flown by the built-in `M600` envelope and `Multirotor` model; a [`CruiseAutopilot`](../handbook/aircraft/autopilot.md) holds its track and speed whenever it is not avoiding.
+Each aircraft is an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py): a start state, an airframe (a [`Kinematics`](../handbook/aircraft/kinematics/index.md) + a [`Performance`](../handbook/aircraft/performance.md) envelope), and an [`Autopilot`](../handbook/aircraft/autopilot.md). The ownship is a multirotor cruising north, flown by the built-in `M600` envelope and `Multirotor` model; a [`CruiseAutopilot`](../handbook/aircraft/autopilot.md) holds its track and speed whenever it is not avoiding.
 
 ```python
 from opencdarr.kinematics import Multirotor
@@ -30,7 +34,7 @@ agent_copter = Agent(copter, M600, Multirotor(), CruiseAutopilot(copter.trk, cop
 
 ## Your own kinematics and performance
 
-Every airframe is two swappable values, so the intruder can be entirely your own. A [`Kinematics`](../handbook/aircraft/index.md) is any class implementing `step`; the simplest useful one follows the commanded ground velocity and keeps the odometry — it does not even read the envelope, or account for wind, which is fine for a first sketch. Its [`Performance`](../handbook/aircraft/performance.md) is a heavy, slow cargo drone.
+Every airframe is two swappable values, so the intruder can be entirely your own. A [`Kinematics`](../handbook/aircraft/kinematics/index.md) is any class implementing `step`; the simplest useful one follows the commanded ground velocity and keeps the odometry — it does not even read the envelope, or account for wind, which is fine for a first sketch. Its [`Performance`](../handbook/aircraft/performance.md) is a heavy, slow cargo drone.
 
 ```python
 from opencdarr.kinematics.base import Kinematics, MotionCommand, odometry_update

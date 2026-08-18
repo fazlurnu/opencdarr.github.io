@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Every seam at once
 
 The [CDaRR page](cdarr.md) replaces the separation manager and keeps the rest of the library. This one replaces **everything**: every pluggable interface implemented from scratch, plus a wind field, run through `run_experiment` exactly as if it shipped with the package.

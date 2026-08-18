@@ -1,29 +1,35 @@
+---
+authorship: opus-5
+---
+
 # Monte Carlo
 
 Sample the encounters, run them, and count the results. Monte Carlo (MC) is the plain estimator. Use it, unless the number that you want is too rare to observe. Nothing gets a new weight and nothing is removed. Thus the batch is a sample of the real population of the encounters, and you can ask it a question that you did not have at the start of the run.
 
 ```python
-result = estimate_ipr(
-    cfg, M600, StateBased(), MVP(1.05), PastCPA(), GnssNavigation(),
-    dpsi=2.0, dcpa=0.0,
+scenario = PairwiseEncounter(speed=10.0, dpsi=2.0, dcpa=0.0, dcpa_max=50.0, tlos=180.0)
+result = estimate_p_los(
+    scenario.builder(Airframe(M600)), cfg,
+    StateBased(), MVP(1.05), PastCPA(), GnssNavigation(),
+    n_encounters=500,
 )
 
-result.p_los          # 0.050   per aircraft
-result.mean_los_pairs # 0.050   losing pairs per encounter
-result.median_min_sep # 53.3 m
+result.p_los_ac        # 0.050   per aircraft
+result.mean_k          # 0.050   losing pairs per encounter
+result.median_min_sep  # 53.3 m
 ```
 
 The run above is 500 encounters on a 2° crossing with `dcpa = 0` and a position fix of 10 m. It has 25 encounters with a loss of separation, thus 50 aircraft of the 1000 that flew.
 
 There is no interval beside the estimate. Refer to [what a batch can say](#where-it-runs-out) for what to do when a batch reports zero.
 
-The geometry slots `dpsi`, `dcpa`, `side`, and `gs_intr` set one parameter of the sampled encounter. Without a value, the estimator draws them from the distribution of the encounters.
+The geometry slots `dpsi`, `dcpa`, `side`, and `gs_intr` pin one parameter of the sampled encounter. Without a value, the scenario draws them from the distribution of the encounters.
 
 ## The unit is the encounter
 
 One encounter is **one simulation run from one seed**. It is one sampled geometry, flown from the spawn to the termination, and it gives one outcome. The estimator runs `n_encounters` of them. Each encounter uses its own RNG substream from the seed of the run. Thus the encounters are independent by construction.
 
-The denominator is the number of aircraft that flew, `n_encounters` times the fleet size — a number that *you selected*. It is not a number that the run found. The experiment design fixes the denominator, and the run never changes it. The aircraft inside one run are **not** independent of each other, because one conflict marks two aircraft at the same time; the *run* is the independent unit.
+The denominator is the number of aircraft that flew, `n_encounters` times the fleet size, a number that *you selected*. It is not a number that the run found. The experiment design fixes the denominator, and the run never changes it. The aircraft inside one run are **not** independent of each other, because one conflict marks two aircraft at the same time; the *run* is the independent unit.
 
 `detection_rate` is a **diagnostic**, the fraction that the detector flagged on the true states, and it is never a divisor. A value below 1 shows the encounters that spawned outside the look-ahead horizon. It also shows that the resolution opened the predicted miss distance before the horizon.
 
@@ -40,13 +46,13 @@ A run with two aircraft gives one answer. A run with more aircraft gives more th
 $$P(\text{LoS}) = \frac{\text{aircraft that lost separation}}{\sum_r N_r}, \qquad
 \mathbb{E}[K] = \frac{\text{losing pairs}}{n}$$
 
-`p_los` is the first of those, and `mean_los_pairs` is the second. The first is a probability and it
+`p_los_ac` is the first of those, and `mean_k` is the second. The first is a probability and it
 stops at 1. The second is a count and it does not, thus it keeps giving information in dense traffic
 where a probability is at its limit.
 
 **There is deliberately no per-run rate beside them.** "The fraction of runs with one loss or more"
 counts a run with five simultaneous losses the same as a run with one, thus it increases with the
-fleet size — by a factor of approximately $N/2$ for a rare event — while the airspace is not more
+fleet size (by a factor of approximately $N/2$ for a rare event) while the airspace is not more
 dangerous, and it reaches 1 in dense traffic and then says nothing more.
 
 **At $N = 2$ the two definitions are one number.** One loss involves two aircraft, and one run has
@@ -61,8 +67,8 @@ an aircraft, and 20 have no loss.
 |---|---|---|
 | losing pairs, total | 25 | 110 |
 | aircraft that lost separation, total | 50 | 190 |
-| **`p_los`** — for each aircraft | **0.050** | **0.633** |
-| `mean_los_pairs` — $\mathbb{E}[K]$ | 0.050 | 1.100 |
+| **`p_los_ac`**: for each aircraft | **0.050** | **0.633** |
+| `mean_k`: $\mathbb{E}[K]$ | 0.050 | 1.100 |
 | *(the per-run rate that is not reported)* | *0.050* | *0.800* |
 
 At $N = 3$ the totals are 190 aircraft against 110 pairs, thus fewer than two aircraft for each
@@ -85,8 +91,8 @@ The encounters are independent, so more than one process can run a batch. But th
 
 ```python
 root   = root_seed_sequence(cfg.seed)
-pooled = combine_ipr([
-    estimate_ipr(cfg, ..., seqs=children(root, lo, hi)) for lo, hi in bounds
+pooled = combine_p_los([
+    estimate_p_los(build, cfg, ..., seqs=children(root, lo, hi)) for lo, hi in bounds
 ])
 pooled == whole    # True, for 3 chunks and for 7
 ```
@@ -95,7 +101,7 @@ pooled == whole    # True, for 3 chunks and for 7
 
 A root at `seed + i` for each chunk does not give the serial answer. Those trees can correlate, and their union is not the tree of the serial run. Thus the result is a different estimate, and not the same estimate in parallel.
 
-`combine_ipr` adds the counts and calculates the rates again from the pooled totals. A mean of the ratios of the chunks would give a chunk with few encounters the same weight as a chunk with many encounters.
+`combine_p_los` adds the counts and calculates the rates again from the pooled totals. A mean of the ratios of the chunks would give a chunk with few encounters the same weight as a chunk with many encounters.
 
 ## Where it runs out
 
@@ -117,7 +123,7 @@ In the sweep on the [pairwise conflict](../experiments/example-pairwise-conflict
 
 ## In the code
 
-`estimate_ipr` is in [`opencdarr/estimator.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/estimator.py). To run a batch, give it the configuration, the models, and the geometry slots. It returns an `IPRResult` that holds `min_seps`, the counts `los_pairs`, `los_aircraft` and `fleet_sizes` for each encounter, and `n_conflict`. The values `p_los`, `ipr`, `mean_los_pairs`, `median_min_sep`, and `detection_rate` come from those counts. Thus they cannot become different from the counts. Each encounter is one [`run_fleet`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py), and the seed tree is in [`opencdarr/rng.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/rng.py) as `root_seed_sequence`, `spawn`, and `children`.
+`estimate_p_los` is in [`opencdarr/estimate/montecarlo.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/estimate/montecarlo.py). To run a batch, give it the encounter builder (a scenario's `builder(...)`), the configuration, and the models. It returns a `MonteCarloEstimate` that holds `min_seps`, the counts `n_los`, `sum_k`, `sum_a` and `sum_n`, and `n_conflict`. The values `p_los_ac`, `mean_k`, `median_min_sep`, and `detection_rate` come from those counts. Thus they cannot become different from the counts. Each encounter is one [`run_fleet`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py), and the seed tree is in [`opencdarr/rng.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/rng.py) as `root_seed_sequence`, `spawn`, and `children`. The notebook for this page is [`examples/handbook/monte_carlo.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/monte_carlo.ipynb); the two loss counts and their denominators are worked case by case in [`p_los_metrics.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/p_los_metrics.ipynb).
 
-**A different estimator is a different function over the same environment**, and a subclass is not necessary. `run_fleet` gives the same `advance` and `is_terminal` interface to each estimator, which is what makes the results comparable. Thus [rare-event simulation](rare-event/index.md) is a second function over that interface, and `combine_ipr` pools the results of more than one batch of the first function. To declare a sweep over either estimator, refer to [Experiments](../experiments/index.md).
+**A different estimator is a different function over the same environment**, and a subclass is not necessary. `run_fleet` gives the same `advance` and `is_terminal` interface to each estimator, which is what makes the results comparable. Thus [rare-event simulation](rare-event/index.md) is a second function over that interface, and `combine_p_los` pools the results of more than one batch of the first function. To declare a sweep over either estimator, refer to [Experiments](../experiments/index.md).
 

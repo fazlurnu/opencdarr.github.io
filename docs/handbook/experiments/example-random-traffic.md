@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Case study: random traffic
 
 What does a resolver do to random traffic, and is the choice of the resolver important? Three
@@ -5,7 +9,7 @@ resolvers (none, MVP, VO) against three fleet sizes (4, 6, 8 aircraft) gives nin
 
 The traffic is [random traffic](../scenarios/random-traffic.md): the aircraft cross a disc of 1000 m
 on random headings, released on a circle of 1200 m. Each aircraft is a
-[DJI M600 multirotor](../aircraft/multirotor.md) at 10 m/s with a 10 m GNSS fix, the
+[DJI M600 multirotor](../aircraft/kinematics/multirotor.md) at 10 m/s with a 10 m GNSS fix, the
 protected zone is 50 m, and the look-ahead is 30 s. Detection is
 [`StateBased`](../separation/conflict-detection.md) and recovery is the
 [probabilistic criterion](../separation/recovery-criteria.md). The reported probability is
@@ -21,7 +25,7 @@ One fleet axis, used by the two calls:
 
 ```python
 FLEET = Sweep([4, 6, 8], name="n_aircraft",
-              build=lambda n: RandomTraffic(n, r_inner=1000.0, r_outer=1200.0))
+              build=lambda n: RandomTraffic(n=n, radius=1200.0))
 ```
 
 Without a resolver the losses are frequent, thus the baseline uses Monte Carlo:
@@ -41,13 +45,13 @@ resolved = run_experiment(
     {"scenario": FLEET,
      "resolver": Sweep(["MVP", "VO"], name="resolver", build=RESOLVERS.__getitem__)},
     methods=STACK,
-    backend=IPS(shells=Ladder(pilot=2000), n_particles=1000, reps=5),
+    backend=IPS(levels=LADDER, n_particles=1000, reps=5),  # LADDER from a pilot MC run
     base_config=CFG, seed=1, n_jobs=-1, cache=True,
 )
 ```
 
-`Ladder` gives the [shells](../estimators/rare-event/index.md) from a pilot Monte-Carlo run of that
-condition, because the conditions are not equally rare.
+The [shells](../estimators/rare-event/index.md) come from a pilot Monte-Carlo run per condition,
+because the conditions are not equally rare.
 
 | aircraft | no resolver (MC) | MVP (IPS) | VO (IPS) |
 |---|---|---|---|
@@ -71,14 +75,14 @@ probability itself is the same quantity, for each aircraft, in both.
 
 ## In the code
 
-The notebook is
-[`examples/handbook/example_random_traffic.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/example_random_traffic.ipynb).
 The scenario is
-[`RandomTraffic`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/scenario/traffic.py),
-which carries its own measurement area.
+[`RandomTraffic`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/scenario/random_traffic.py),
+which carries its own measurement area. The notebook for the scenario is
+[`examples/handbook/traffic_density.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/traffic_density.ipynb):
+it builds the same traffic and raises the density, with and without CNS uncertainty.
 
 !!! code "Run it yourself"
-    Run the notebook from the start to the end to reproduce the table and the two figures. The
-    Monte-Carlo call needs approximately two minutes, and the rare-event call needs approximately
-    one hour on eight cores. `cache=True` keeps one entry for each condition, thus a second run
-    plots the results again and does not simulate them again.
+    The two declarations above are complete. The Monte-Carlo call needs approximately two
+    minutes, and the rare-event call needs approximately one hour on eight cores. `cache=True`
+    keeps one entry for each condition, thus a second run reads the results back and does not
+    simulate them again.

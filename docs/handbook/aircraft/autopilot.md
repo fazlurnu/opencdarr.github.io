@@ -1,10 +1,14 @@
+---
+authorship: opus-5
+---
+
 # Autopilot
 
-The autopilot decides how the aircraft achieves its mission. Each timestep turns that intent into a single [`MotionCommand`](index.md#motioncommand), and the airframe then flies according to it. This library provides two built-in autopilots, the `CruiseAutopilot` and the `WaypointAutopilot`. [`CruiseAutopilot`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/autopilot/cruise.py) holds a fixed heading and speed, while [`WaypointAutopilot`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/autopilot/waypoint.py) navigates a mission of waypoints for *both* airframes from one implementation.
+The autopilot decides how the aircraft achieves its mission. Each timestep turns that intent into a single [`MotionCommand`](kinematics/index.md#motioncommand), and the airframe then flies according to it. This library provides two built-in autopilots, the `CruiseAutopilot` and the `WaypointAutopilot`. [`CruiseAutopilot`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/autopilot/cruise.py) holds a fixed heading and speed, while [`WaypointAutopilot`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/autopilot/waypoint.py) navigates a mission of waypoints for *both* airframes from one implementation.
 
 The command from the autopilot is considered as the aircraft's **nominal** command. However, to maintain safety, the [separation manager](../separation/index.md) may override that nominal when a conflict is predicted, and releases it back once [recovery](../separation/recovery-criteria.md) says it is safe to resume the mission. The nominal command is calculated every timestep from the current state, so an aircraft that was flying off its plan resumes navigating the moment the override is gone.
 
-## The contract
+## The interface
 
 Every autopilot implements one method:
 
@@ -15,7 +19,7 @@ It is a function of its arguments and of the autopilot's own immutable configura
 `CruiseAutopilot` is the simple case that makes the layering visible. It precomputes a constant velocity command and returns it every timestep, ignoring the state, the memory, and the performance it is passed:
 
 ```python
-CruiseAutopilot(heading=0.0, speed=17.0)  # hold due north at 17 m/s, forever
+CruiseAutopilot(track=0.0, speed=17.0)  # hold due north at 17 m/s, forever
 ```
 
 ## Flying a mission
@@ -42,7 +46,7 @@ Neither airframe is a special case in the autopilot. That is what lets a [mixed 
 
 ## L1 leg tracking
 
-Tracking a leg rather than cutting to its endpoint is the fixed-wing's whole answer to a waypoint, so it is worth a closer look. Take the leg line from the previous waypoint $A$ to the active one $B$. The aircraft steers toward a moving **reference point**, a fixed lookahead $L_1$ ahead of it on the line. This is standard L1 guidance ([Park, Deyst and How, 2004](https://arc.aiaa.org/doi/10.2514/6.2004-4900)), and it is used here for the effect it produces, a reference for how a fixed-wing follows a path. It runs on the [tracker](fixedwing.md) side, from the leg the autopilot emits, as seen from the figure below.
+Tracking a leg rather than cutting to its endpoint is the fixed-wing's whole answer to a waypoint, so it is worth a closer look. Take the leg line from the previous waypoint $A$ to the active one $B$. The aircraft steers toward a moving **reference point**, a fixed lookahead $L_1$ ahead of it on the line. This is standard L1 guidance ([Park, Deyst and How, 2004](https://arc.aiaa.org/doi/10.2514/6.2004-4900)), and it is used here for the effect it produces, a reference for how a fixed-wing follows a path. It runs on the [tracker](kinematics/fixedwing.md) side, from the leg the autopilot emits, as seen from the figure below.
 
 <!-- We work in a frame centred on the aircraft, and we write $u = (B - A)/\lVert B - A \rVert$ for the unit vector along the leg. The closest point on the line (the foot of the perpendicular) and the **cross-track distance** $d$ are then
 
@@ -63,5 +67,5 @@ This library leaves L1 unmodified. Without wind a well-tuned L1 is what a fixed-
 
 ## In the code
 
-The autopilots live in [`opencdarr/autopilot/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/autopilot), which holds [`base.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/autopilot/base.py) (the interface and `GuidanceMemory`), `cruise.py`, and `waypoint.py`. The [`Mission`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/mission.py) they consume sits beside them. Every aircraft in an encounter or a fleet carries its own autopilot; give none and the aircraft flies its initial cruise. Any guidance law can be added by honouring the same contract, whether it is a loiter that spirals in, a Dubins path planner, or a follow-the-leader rule.
+The autopilots live in [`opencdarr/autopilot/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/autopilot), which holds [`base.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/autopilot/base.py) (the interface and `GuidanceMemory`), `cruise.py`, and `waypoint.py`. The [`Mission`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/mission.py) they consume sits beside them. Every aircraft in an encounter or a fleet carries its own autopilot; give none and the aircraft flies its initial cruise. Any guidance law can be added by implementing the same interface, whether it is a loiter that spirals in, a Dubins path planner, or a follow-the-leader rule. The notebook for this page is [`examples/handbook/autopilot.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/autopilot.ipynb): both figures come from it, including the L1 construction.
 

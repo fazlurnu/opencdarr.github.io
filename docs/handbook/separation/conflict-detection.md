@@ -1,6 +1,10 @@
+---
+authorship: opus-5
+---
+
 # Conflict Detection
 
-Conflict detection is the trigger for everything the [separation manager](index.md) does. It answers one yes/no question about one directed pair. **The input** to the conflict detection is the percevied ownship state, the perceived intruder state, the protected-zone radius `rpz`, and the look-ahead time `t_lookahead`. Then, **the output** is a single `bool`, whether the two aircraft have to start a resolution manoeuvre or not.
+Conflict detection is the trigger for everything the [separation manager](index.md) does. It answers one yes/no question about one directed pair. **The input** to the conflict detection is the perceived ownship state, the perceived intruder state, the protected-zone radius `rpz`, and the look-ahead time `t_lookahead`. Then, **the output** is a single `bool`, whether the two aircraft have to start a resolution manoeuvre or not.
 
 ```python
 conflict = StateBased().detect(own, perceived_intr, rpz=50.0, t_lookahead=120.0)  # a prediction
@@ -13,7 +17,7 @@ A loss of separation is a fact about now rather than a prediction, so `is_los` s
 
 ## The default, `StateBased`
 
-[`StateBased`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/statebased.py) is horizontal closest point of approach, and it has no tunable parameters. The protected zone and the look-ahead are operating conditions handed in by the manager, not knobs on the detector.
+[`StateBased`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/statebased.py) is horizontal closest point of approach, and it has no tunable parameters. The protected zone and the look-ahead are operating conditions handed in by the manager, not parameters of the detector.
 
 The detector works in the local East-North frame, taking the intruder's position $\mathbf{r}$ and velocity $\mathbf{v}$ relative to the ownship. The separation vector at a future time is then the straight line $\mathbf{s}(t) = \mathbf{r} + \mathbf{v}\,t$, and minimising its length gives the time of closest approach and the distance at CPA there.
 
@@ -32,7 +36,7 @@ $$ \text{conflict} \;=\; \big(d_\text{cpa} < R\big)\ \wedge\ \big(t_\text{in} < 
   <figcaption>State-based detection on one crossing pair (no noise). Left, the relative frame. The closest approach misses by <em>dcpa</em> = 25 m, inside the 50 m protected zone, so the track cuts the circle at $t_\text{in}$ and $t_\text{out}$. Right, the same encounter as separation over time. The breach window falls within the look-ahead, so the pair is flagged <strong>in conflict</strong>.</figcaption>
 </figure> -->
 
-## The contract
+## The interface
 
-A detector of your own subclasses [`ConflictDetector`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/base.py) and implements one method, `detect(own, intr, rpz, t_lookahead) -> bool` — one verdict per directed pair, computed from the ownship's perceived picture. It must be **pure**: a function of its arguments only, with nothing stored on the object between calls, which is what lets a run reproduce exactly and a rare-event particle clone safely. How it decides — predictive, reactive, probabilistic — is entirely yours. `StateBased` and `is_los` live in [`opencdarr/cd/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/cd) as the reference.
+A detector of your own subclasses [`ConflictDetector`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cd/base.py) and implements one method, `detect(own, intr, rpz, t_lookahead) -> bool`: one verdict per directed pair, computed from the ownship's perceived picture. It must be **pure**: a function of its arguments only, with nothing stored on the object between calls, which is what lets a run reproduce exactly and a rare-event particle clone safely. How it decides (predictive, reactive, probabilistic) is entirely yours. `StateBased` and `is_los` live in [`opencdarr/cd/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/cd) as the reference. The notebook for this page is [`examples/handbook/separation.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/separation.ipynb): its detection section computes $t_\text{cpa}$, $d_\text{cpa}$, and the breach window from the formulas above on one 135° crossing.
 

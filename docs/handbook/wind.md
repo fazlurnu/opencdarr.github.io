@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Wind
 
 Wind is the one part of the environment that acts inside the kinematics. It is not one of the replaceable interfaces. It is a **field that the loop puts into each step**, in the same category as the timestep. Like the [CNS](cns/index.md) layer, the world applies the wind to the aircraft, and the aircraft does not select it. Unlike CNS, the wind acts on the *ground truth*, and it bends the path that each airframe flies.
@@ -75,6 +79,6 @@ WindField.from_met(coming_from_deg=270.0, speed=6.0)  # 6 m/s from the west
 
 The default value everywhere is `NO_WIND`. Without a `wind=` argument, each airframe flies in still air, and the ground velocity is equal to the air velocity.
 
-**The kinematics hold the wind effect**, because `WindField` is a field and not an interface. Thus a wind that changes in space or in time is a new `Kinematics` implementation, not a new wind class. The airframe reads the field in its own `step`. To model a different wind effect, write your own kinematics. The contract is on the [Aircraft](aircraft/index.md#the-contract) page.
+**The kinematics hold the wind effect**, because `WindField` is a field and not an interface. Thus a wind that changes in space or in time is a new `Kinematics` implementation, not a new wind class. The airframe reads the field in its own `step`. To model a different wind effect, write your own kinematics. The interface is on the [Aircraft](aircraft/kinematics/index.md#the-interface) page. The notebook for this page is [`examples/handbook/wind.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/wind.ipynb).
 
 [^rl]: Reyner and Liem, *Energy-Efficient Trochoidal Path Planning for Unmanned Aircraft Under Wind and Performance Constraints*, Drones **2026**, 10, 426. OpenCDaRR uses only the kinematic point-mass model (Eqs 1–9), which is the coordinated-turn yaw and the wind vector sum. It does not use the path planner.

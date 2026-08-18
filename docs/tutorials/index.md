@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Tutorials
 
 The tutorials run as a series. Each one builds on the one before it:

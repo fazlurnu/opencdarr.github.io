@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Recovery Criteria
 
 Resolving a conflict is only half the manoeuvre. Once the ownship has turned away, something has to decide when it may stop resolving and return to its nominal plan, otherwise it would avoid forever. **The input** to the recovery criterion is the ownship state, the perceived intruder state, and the protected-zone radius `rpz`. Then, **the output** is a single `bool`, whether this pair is clear enough to resume.
@@ -42,7 +46,7 @@ The scenario is the same in both. Two M600 multirotors fly at 12 m/s with a 50 m
 
 That near-parallel corner is also where Past-CPA's late resume turns fragile once noise enters. A weak, noise-sensitive divergence signal is exactly the wrong thing to wait on, and across a sweep of crossing angles it is near-parallel where Past-CPA actually loses separation. FTR's forward check clears every angle at a tight, near-constant margin.
 
-## The contract
+## The interface
 
-A criterion of your own subclasses [`RecoveryCriterion`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/base.py) and implements one method, `should_resume(own, intr, rpz) -> bool` — `True` when this pair is clear enough to resume. It is asked per pair, and the manager reverts only once every active pair agrees, so the criterion never needs to know about more than one intruder. It must be pure, with no state on the object between calls. The built-ins — `PastCPA`, `FTR`, and `ProbabilisticFTR` — live in [`opencdarr/crr/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/crr) as references.
+A criterion of your own subclasses [`RecoveryCriterion`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/crr/base.py) and implements one method, `should_resume(own, intr, rpz) -> bool`: `True` when this pair is clear enough to resume. It is asked per pair, and the manager reverts only once every active pair agrees, so the criterion never needs to know about more than one intruder. It must be pure, with no state on the object between calls. The built-ins (`PastCPA`, `FTR`, and `ProbabilisticFTR`) live in [`opencdarr/crr/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/crr) as references. The notebook for this page is [`examples/handbook/separation.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/separation.ipynb): its recovery section runs both cases above. The angular quadrature inside `ProbabilisticFTR` has its own study, [`probftr_angular_grid.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/probftr_angular_grid.ipynb).
 

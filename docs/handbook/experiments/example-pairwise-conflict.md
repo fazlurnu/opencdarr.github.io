@@ -1,8 +1,12 @@
+---
+authorship: opus-5
+---
+
 # Case study: pairwise conflict
 
 How do MVP and VO hold up as the crossing becomes shallow and the position fix becomes worse?
 
-Two [DJI M600 multirotors](../aircraft/multirotor.md) at 10 m/s, head-to-head
+Two [DJI M600 multirotors](../aircraft/kinematics/multirotor.md) at 10 m/s, head-to-head
 (`dcpa = 0`) at 180 s from the entry to the protected zone, a 50 m protected zone and a 120 s
 look-ahead, [`StateBased`](../separation/conflict-detection.md) detection and
 [Past-CPA](../separation/recovery-criteria.md) recovery. Three parameters are swept, thus
@@ -49,11 +53,11 @@ the broadcasts only: MVP believed that it was 41.9 m from the intruder while the
 ## In the code
 
 The notebook is
-[`examples/handbook/example_pairwise_conflict.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/example_pairwise_conflict.ipynb).
-The declaration layer is
-[`experiment.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/experiment.py), the
+[`examples/handbook/resolver_comparison.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/resolver_comparison.ipynb).
+The declaration layer is the
+[`opencdarr/experiment/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/experiment) package, the
 estimate behind each cell is
-[`estimate_ipr`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/estimator.py), and each
+[`estimate_p_los`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/estimate/montecarlo.py), and each
 encounter is one
 [`run_fleet`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py).
 

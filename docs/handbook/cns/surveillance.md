@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Surveillance
 
 Surveillance is the **S** of [CNS](index.md), and it is the receiving end of the chain. [Communication](communication.md) delivers a message or loses it. Surveillance then decides what an aircraft *holds* as its perceived traffic. **The input** to the surveillance model is the channel state from communication, the receiver, the source, and the current time. Then, **the output** is the perceived `AircraftState` of that source. Before that link delivers its first message, the output is `None`.
@@ -22,9 +26,9 @@ There is no measurement noise in this run. Thus the speed of the source is exact
 
 ## In the code
 
-`LastKnown` is in [`opencdarr/cns/surveillance.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/surveillance.py). To switch it on, pass `surveillance=` to `run_encounter` or `run_fleet`. The model makes no random draw, so it needs no RNG substream of its own. Without `surveillance=`, each decision reads the state of the source directly. The same module has `age`, which gives the time since the last delivery on a link, or `None` before the first contact.
+`LastKnown` is in [`opencdarr/cns/surveillance.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/surveillance.py). To switch it on, pass `surveillance=` to `run_encounter` or `run_fleet`. The model makes no random draw, so it needs no RNG substream of its own. Without `surveillance=`, each decision reads the state of the source directly. The same module has `age`, which gives the time since the last delivery on a link, or `None` before the first contact. The notebook for this page is [`examples/handbook/surveillance.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/surveillance.ipynb).
 
-## The contract
+## The interface
 
 A model of your own implements [`SurveillanceModel`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/base.py) with the one method `perceived(state, receiver, source, t_now)`, and a subclass of `LastKnown` is not necessary. A model that extrapolates the last message forward, or one that holds a message for a maximum age only, is a separate implementation beside it, judged in the same runs.
 

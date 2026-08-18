@@ -67,7 +67,7 @@ nav:
       - tutorials/index.md
       - "T1. Under CNS uncertainty": tutorials/t1-cns-uncertainty.md
       - "T2. Using built-in estimator": tutorials/t2-monte-carlo-with-config-and-scenario.md
-      - "T3. Six aircraft in an experiment": tutorials/t3-setting-up-an-experiment.md
+      - "T3. Setting up an experiment": tutorials/t3-setting-up-an-experiment.md
       - "T4. Two estimators": tutorials/t4-two-estimators.md
       - "T5. Calibrating the ladder": tutorials/t5-calibrating-the-ladder.md
 # The L-series that used to sit here is gone: superseded by the T-series above,
@@ -78,8 +78,9 @@ nav:
           - handbook/aircraft/index.md
           - Performance: handbook/aircraft/performance.md
           - Kinematics:
-              - Multirotor: handbook/aircraft/multirotor.md
-              - Fixed-wing: handbook/aircraft/fixedwing.md
+              - handbook/aircraft/kinematics/index.md
+              - Multirotor: handbook/aircraft/kinematics/multirotor.md
+              - Fixed-wing: handbook/aircraft/kinematics/fixedwing.md
           - Autopilot & mission: handbook/aircraft/autopilot.md
       - Separation:
           - handbook/separation/index.md
@@ -146,9 +147,11 @@ plugins:
         first-run.md: getting-started/first-run.md
         how-it-works.md: getting-started/how-it-works.md
         modules/index.md: handbook/index.md
-        modules/kinematics/index.md: handbook/aircraft/index.md
-        modules/kinematics/multirotor.md: handbook/aircraft/multirotor.md
-        modules/kinematics/fixedwing.md: handbook/aircraft/fixedwing.md
+        modules/kinematics/index.md: handbook/aircraft/kinematics/index.md
+        modules/kinematics/multirotor.md: handbook/aircraft/kinematics/multirotor.md
+        modules/kinematics/fixedwing.md: handbook/aircraft/kinematics/fixedwing.md
+        handbook/aircraft/multirotor.md: handbook/aircraft/kinematics/multirotor.md
+        handbook/aircraft/fixedwing.md: handbook/aircraft/kinematics/fixedwing.md
         modules/autopilot.md: handbook/aircraft/autopilot.md
         modules/separation/index.md: handbook/separation/index.md
         modules/separation/conflict-detection.md: handbook/separation/conflict-detection.md
@@ -172,7 +175,7 @@ plugins:
         experiments/example-pairwise-conflict.md: handbook/experiments/example-pairwise-conflict.md
         experiments/example-random-traffic.md: handbook/experiments/example-random-traffic.md
         build-your-own/performance.md: handbook/aircraft/performance.md
-        build-your-own/kinematics.md: handbook/aircraft/index.md
+        build-your-own/kinematics.md: handbook/aircraft/kinematics/index.md
         build-your-own/autopilot.md: handbook/aircraft/autopilot.md
         build-your-own/separation-manager/conflict-detection.md: handbook/separation/conflict-detection.md
         build-your-own/separation-manager/conflict-resolution.md: handbook/separation/conflict-resolution.md

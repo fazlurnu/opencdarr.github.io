@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # T2. Using built-in estimator
 
 In T1 we learned how to write our own performance and kinematics models, and how to fly an encounter

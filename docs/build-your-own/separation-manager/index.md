@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Separation Manager
 
 The separation manager is the one piece in this section you do **not** subclass. It is the orchestrator: each decision step it runs three pluggable strategies in turn and overlays their result on the aircraft's nominal command.
@@ -94,7 +98,7 @@ Because it only reacts once the aircraft are *already* within 100 m — rather t
 
 ## Conflict resolution { #conflict-resolution }
 
-`resolve` returns a [`MotionCommand`](../../handbook/aircraft/index.md#motioncommand) carrying a ground-velocity vector — `target_velocity=(v_east, v_north)` — that flows straight into the kinematics. It receives the **set** of intruders in conflict (length 1 for a pairwise encounter), so a multi-aircraft resolver composes them its own way. The default `MVP` nudges the velocity along a potential-field gradient; ours is blunter — hold course until an intruder is within 70 m, then hard-turn 90° to the right.
+`resolve` returns a [`MotionCommand`](../../handbook/aircraft/kinematics/index.md#motioncommand) carrying a ground-velocity vector — `target_velocity=(v_east, v_north)` — that flows straight into the kinematics. It receives the **set** of intruders in conflict (length 1 for a pairwise encounter), so a multi-aircraft resolver composes them its own way. The default `MVP` nudges the velocity along a potential-field gradient; ours is blunter — hold course until an intruder is within 70 m, then hard-turn 90° to the right.
 
 ```python
 from collections.abc import Sequence

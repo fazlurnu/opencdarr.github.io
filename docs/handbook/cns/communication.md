@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Communication
 
 Communication is the **C** of [CNS](index.md). After [navigation](navigation.md) makes a measurement, `Comm` decides if the measurement reaches the other aircraft, and how late. **The input** to the communication model has five parts. These parts are the messages that the aircraft broadcast in this timestep, the receivers for these messages, the current time, a random stream, and the channel state from the last timestep. **The output** is the new channel state. For each directed link, this state holds the most recent message that arrived.
@@ -27,8 +31,8 @@ Six settings act on the path from the broadcast of one aircraft to the perceived
 
 When an aircraft broadcasts a message, each other aircraft receives that message **independently**. For each receiver, `Comm` draws two values:
 
-- **reception** — a Bernoulli trial[^adsb] with the probability `reception_prob`. If the trial fails, the message is lost. The receiver then keeps the message that it already holds.
-- **latency** — the delay of a message that arrives. `Comm` draws the delay from a `LatencyDistribution`. The message becomes available when the simulation time is `t_meas + delay`.
+- **reception**: a Bernoulli trial[^adsb] with the probability `reception_prob`. If the trial fails, the message is lost. The receiver then keeps the message that it already holds.
+- **latency**: the delay of a message that arrives. `Comm` draws the delay from a `LatencyDistribution`. The message becomes available when the simulation time is `t_meas + delay`.
 
 `Comm` tests the reception first, and it draws the delay only for a message that arrives. This sequence is a **design choice**, not a physical effect. The two draws are independent. Thus the opposite sequence gives the same distribution of the messages that arrive.
 
@@ -124,5 +128,7 @@ In the two conditions, the affected receiver continues to **hold** the last data
 `Comm` is in [`opencdarr/cns/communication.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/communication.py). To switch it on, pass `communication=` to `run_encounter` or `run_fleet`. Also pass its own RNG substream `comm_rng=`, which stays separate from the navigation stream. Without `Comm`, the delivery is immediate and perfect. Pass the transmit schedule with `schedule=`. A `jitter` that is not zero takes its own `broadcast_rng=`. The view of another aircraft in a decision is then the data that [surveillance](surveillance.md) holds for that link. This data is the last message from the link, or no data before the first contact.
 
 **Link gates** add the effects that are not the reception or the latency, and a subclass is not necessary. Each gate holds its own state, and it is possible to use more than one gate together. Thus a radio failure and a terrain mask are two gates, not a new class for the combination. To write a gate, a latency shape, a broadcast rate, or a full channel, refer to [Build your own → Communication](../../build-your-own/cns/communication.md).
+
+The notebook for this page is [`examples/handbook/communication.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/communication.ipynb): it reproduces every figure and number above, and additionally works a bimodal latency shape, a duty-cycle gate, and the `SurveillanceRange` gate.
 
 [^adsb]: The reception-probability formulation is a Bernoulli trial for each message, and it gives the geometric update-interval distribution. It follows Rahman, Ellerbroek, and Hoekstra, *Modelling ADS-B Reception Probability using OpenSky Data*, Journal of Open Aviation Science (Proceedings of the 12th OpenSky Symposium).

@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Validation
 
 An estimator for a number this small is trustworthy only if you check it where a check is still possible. This page compares IPS with plain Monte Carlo on two properties. **Accuracy** asks if the two estimators agree. **Efficiency** asks what the agreement costs. The comparison runs the two estimators across the full space of the CNS uncertainty. This page uses the [theory](index.md) and the [run recipe](running.md).
@@ -32,4 +36,6 @@ The sweep shows two results:
     This is necessary to know your own needs and to interpret the results correctly.
 
 In summary: in a regime that Monte Carlo can still reach ($\sim 10^{-4}$ to $10^{-5}$), IPS gives the same results across the experiments. That is the evidence that you need before you use IPS in the more rare regimes, where Monte Carlo cannot go.
+
+Two notebooks carry this comparison. [`rare_event_mc_vs_ips.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/rare_event_mc_vs_ips.ipynb) runs the two estimators on one declaration and walks the rarity down to where Monte Carlo fails. [`validation_campaign.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/validation_campaign.ipynb) reads back the committed campaign, two estimators across three geometries, and states the verdict with its weak points.
 

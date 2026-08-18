@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Estimators
 
 One [encounter](../scenarios/index.md) is one sample. The encounter lost separation or it did not, and it reached one closest approach. An **estimator** makes one number from many of these samples. The number is a probability with an interval, and the interval shows how much to trust the probability.
@@ -35,4 +39,6 @@ The cost is that IPS is **a safety estimator and nothing else**. The algorithm r
 Today the shell ladder is fixed before the run. **Adaptive multilevel splitting** (AMS) selects each shell from the current cloud instead, as a quantile of the positions that the particles reached. Thus AMS removes the manual adjustment and the risk of a collapse. It is the planned third estimator, and it runs on the machinery that is already here.
 
 The run stays re-derivable from `config + seed + code-hash` for each of these estimators.
+
+The notebooks for this chapter are [`monte_carlo.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/monte_carlo.ipynb), [`rare_event_ips.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/rare_event_ips.ipynb), [`rare_event_ips_illustrated.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/rare_event_ips_illustrated.ipynb), and [`rare_event_mc_vs_ips.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/rare_event_mc_vs_ips.ipynb).
 

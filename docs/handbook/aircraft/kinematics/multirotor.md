@@ -1,6 +1,10 @@
+---
+authorship: opus-5
+---
+
 # Multirotor
 
-The multirotor is a **holonomic point mass**. Its velocity can point in any direction and change direction in a single bounded step, and it can slow, stop, and hover. Facing is separate from travel, so the nose heading (`yaw`) can point one way while the vehicle moves another. This library uses the assumed DJI M600 envelope, with top speed `v_max` 18 m/s, isotropic acceleration `a_x` 5 m/s², and yaw rate 90 °/s. These limits are a [`Performance`](performance.md) value, not constants of the model, so a different multirotor is a different value.
+The multirotor is a **holonomic point mass**. Its velocity can point in any direction and change direction in a single bounded step, and it can slow, stop, and hover. Facing is separate from travel, so the nose heading (`yaw`) can point one way while the vehicle moves another. This library uses the assumed DJI M600 envelope, with top speed `v_max` 18 m/s, isotropic acceleration `a_x` 5 m/s², and yaw rate 90 °/s. These limits are a [`Performance`](../performance.md) value, not constants of the model, so a different multirotor is a different value.
 
 ## Equation of motion
 
@@ -33,7 +37,7 @@ For the multirotor a [`MotionCommand`](index.md#motioncommand) has two independe
 
 Every figure below drives the real model from a hover with the commands shown above it. The grey arrows are the nose (`yaw`), sampled along the track. Where they line up with the path, facing follows travel. Where they do not, the two are decoupled.
 
-### Inertial velocity — `target_velocity`
+### Inertial velocity: `target_velocity`
 
 All three commands below fly due north, and only the nose changes.
 
@@ -44,11 +48,11 @@ MotionCommand(target_velocity=(0.0, 15.0), target_yawspeed=45.0)  # nose spinnin
 ```
 
 <figure markdown="span">
-  ![Three inertial-velocity commands, all flying north, with the nose arrows differing between hold, fixed east, and spinning](../../assets/img/mc-velocity.png)
+  ![Three inertial-velocity commands, all flying north, with the nose arrows differing between hold, fixed east, and spinning](../../../assets/img/mc-velocity.png)
   <figcaption>Inertial velocity, 15 m/s north, under three yaw modes. The track is identical in all three, because velocity is a world-frame vector. Left, the nose follows travel. Middle, the nose is held east while the vehicle flies north. Right, the nose spins.</figcaption>
 </figure>
 
-### Body velocity — `target_body_velocity`
+### Body velocity: `target_body_velocity`
 
 Body forward is along the nose, so here the yaw *does* steer the travel. The same three yaw modes now change the path.
 
@@ -59,11 +63,11 @@ MotionCommand(target_body_velocity=(15.0, 0.0), target_yawspeed=45.0) # forward 
 ```
 
 <figure markdown="span">
-  ![Three body-velocity commands whose tracks follow the yaw, giving a straight line, a turn to east, and a circle](../../assets/img/mc-body.png)
+  ![Three body-velocity commands whose tracks follow the yaw, giving a straight line, a turn to east, and a circle](../../../assets/img/mc-body.png)
   <figcaption>Body velocity, 15 m/s forward. Because forward is along the nose, the track follows the yaw. Left, a fixed nose gives a straight line. Middle, turning the nose to east swings the travel with it. Right, a constant yaw rate turns forward flight into a circle.</figcaption>
 </figure>
 
-### Position — `target_position`
+### Position: `target_position`
 
 ```python
 MotionCommand(target_position=(lat, lon))                        # go-to and hover
@@ -72,8 +76,8 @@ MotionCommand(target_position=(lat, lon), target_yawspeed=45.0)  # fly there spi
 ```
 
 <figure markdown="span">
-  ![Three position commands to the same point, with identical tracks and only the nose differing](../../assets/img/mc-position.png)
-  <figcaption>A point 130 m to the north-east. All three reach it and hover, so the track is yaw-independent, and only the nose differs — following travel, held south, or spinning.</figcaption>
+  ![Three position commands to the same point, with identical tracks and only the nose differing](../../../assets/img/mc-position.png)
+  <figcaption>A point 130 m to the north-east. All three reach it and hover, so the track is yaw-independent, and only the nose differs: following travel, held south, or spinning.</figcaption>
 </figure>
 
 ### Edge cases
@@ -86,7 +90,9 @@ MotionCommand(target_velocity=(0.0, 0.0))                      # decelerate to a
 ```
 
 <figure markdown="span">
-  ![Left, a command with both position and velocity flies to the point; right, a zero velocity from cruise stops](../../assets/img/mc-edge.png)
+  ![Left, a command with both position and velocity flies to the point; right, a zero velocity from cruise stops](../../../assets/img/mc-edge.png)
   <figcaption>Left, both a position and a velocity are set, so position wins and the velocity is ignored. Right, a zero velocity from a 15 m/s cruise decelerates to a stop within the stopping distance.</figcaption>
 </figure>
+
+Every figure on this page comes from [`examples/handbook/kinematics_multirotor.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/kinematics_multirotor.ipynb), driving the real `Multirotor.step` under the M600 envelope.
 

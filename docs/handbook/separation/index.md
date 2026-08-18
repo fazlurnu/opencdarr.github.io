@@ -1,6 +1,10 @@
+---
+authorship: opus-5
+---
+
 # Separation Manager
 
-The **separation manager** is the conflict detection, resolution, and recovery criteria (CDaRR) safety overlay. It sits between the [autopilot](../aircraft/autopilot.md), which says what the aircraft *wants* to do, and the [kinematics](../aircraft/index.md), which says what the aircraft is physically *able* to do. Its one job each timestep is to decide whether the aircraft's nominal command from the autopilot is safe given the traffic it perceives, and if not, replace it with an avoidance command until the danger has passed.
+The **separation manager** is the conflict detection, resolution, and recovery criteria (CDaRR) safety overlay. It sits between the [autopilot](../aircraft/autopilot.md), which says what the aircraft *wants* to do, and the [kinematics](../aircraft/kinematics/index.md), which says what the aircraft is physically *able* to do. Its one job each timestep is to decide whether the aircraft's nominal command from the autopilot is safe given the traffic it perceives, and if not, replace it with an avoidance command until the danger has passed.
 
 It answers that by running three steps in order, and this is why conflict detection, conflict resolution, and recovery live under it here:
 
@@ -44,11 +48,11 @@ The classical detect → resolve → recover pipeline is one way to keep aircraf
 
 > given an aircraft's state, the traffic it perceives, and its nominal command, return the command it should fly.
 
-Anything that honours that contract can stand in as the separation manager, whatever it does inside. For instnace, a learned policy like a **reinforcement-learning separation manager** would map the same perceived picture and nominal straight to a command, with the detect-resolve-recover reasoning replaced by a trained network rather than three hand-built geometric pieces. We haven't tested it yet, and we would like to hear from you!
+Anything that implements that interface can stand in as the separation manager, whatever it does inside. For instance, a learned policy like a **reinforcement-learning separation manager** would map the same perceived picture and nominal straight to a command, with the detect-resolve-recover reasoning replaced by a trained network rather than three hand-built geometric pieces. We haven't tested it yet, and we would like to hear from you!
 
 That is the direction this layer is built to grow in: promoting the separation manager to a swappable interface, with the classical orchestrator as one implementation and a learned policy as another, both judged on the same standard by the same [scenarios](../scenarios/index.md) and metrics.
 
-## The three contracts
+## The three interfaces
 
 Each stage the manager orchestrates is an abstract base class with a single method, and each has a default. To replace one you subclass it, implement the one method, and pass the instance in; the loop, the fleet, and the other two stages do not change.
 
@@ -58,5 +62,7 @@ Each stage the manager orchestrates is an abstract base class with a single meth
 | [resolution](conflict-resolution.md) | `ConflictResolver` | `resolve(own, intruders, rpz, preferred)` | `MotionCommand` | `MVP` |
 | [recovery](recovery-criteria.md) | `RecoveryCriterion` | `should_resume(own, intr, rpz)` | `bool` | `PastCPA` |
 
-All three are **directed** — computed from the ownship's point of view against its perceived traffic — and **pure**, a function of their arguments only, for the same no-hidden-state reason as above. One class may implement more than one interface and fill more than one slot; [Build your own → Separation Manager](../../build-your-own/separation-manager/index.md) works that idea all the way up to a monolithic end-to-end policy.
+All three are **directed**, computed from the ownship's point of view against its perceived traffic, and **pure**, a function of their arguments only, for the same no-hidden-state reason as above. One class may implement more than one interface and fill more than one slot; [Build your own → Separation Manager](../../build-your-own/separation-manager/index.md) works that idea all the way up to a monolithic end-to-end policy.
+
+The notebook for this section is [`examples/handbook/separation.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/separation.ipynb): it drives the three stages through `SeparationManager.step` over the real multirotor loop and generates the figures on the three stage pages.
 

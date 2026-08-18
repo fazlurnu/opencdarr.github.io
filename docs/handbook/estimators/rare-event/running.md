@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Running a simulation
 
 This page runs the estimator from the start to the end. It uses the [theory](index.md). For the evidence that the estimator is correct, refer to [validation](validation.md).
@@ -6,8 +10,8 @@ This page runs the estimator from the start to the end. It uses the [theory](ind
 
 The estimator does not know the scenario. It needs two items only:
 
-- a **factory** that builds one particle from a random seed — the rules of the particle (`env`) and its initial world (`state`), and
-- the **shell ladder** — a sequence of running-minimum separations that decreases and ends at `rpz`.
+- a **factory** that builds one particle from a random seed: the rules of the particle (`env`) and its initial world (`state`), and
+- the **shell ladder**: a sequence of running-minimum separations that decreases and ends at `rpz`.
 
 The fleet interface gives all the other items. The scenario here is one fixed 90° crossing of two multirotors on a collision course. Each aircraft has a GNSS error in its own fix. The separation manager (`StateBased` + `MVP` + `PastCPA`) moves the two aircraft to a position immediately outside the 50 m protected zone almost every time. Loss of separation is the thin tail: it occurs when the navigation noise causes an aircraft to give too small a clearance.
 
@@ -15,7 +19,7 @@ The fleet interface gives all the other items. The scenario here is one fixed 90
 import time
 from joblib import Parallel, delayed
 
-from opencdarr.ips import Particle, ips_once, replication_seeds, combine_replications
+from opencdarr.estimate.ips import Particle, ips_once, replication_seeds, combine_replications
 from opencdarr.fleet import Agent, build_env
 from opencdarr.performance import M600
 from opencdarr.scenario import create_conflict
@@ -42,7 +46,7 @@ def build_initial(seq):
 LEVELS = [150, 135, 122, 112, 104, 97, 90, 82, 74, 68, 63, 59, 56, 54, 52, 51, 50]
 ```
 
-## Run it — replications in parallel
+## Run it: replications in parallel
 
 One IPS run (`ips_once`) moves the $N$ particles forward, one shell after the other. It returns $\hat P = \prod_k (S_k/N)$. The particles of one run interact, thus one run cannot tell you how much it varies. That is why a run is **replicated** on independent seed subtrees: the replications are independent estimates of the same number, and they are also fully parallel.
 
@@ -50,7 +54,7 @@ One IPS run (`ips_once`) moves the $N$ particles forward, one shell after the ot
 thus the count of aircraft in a loss is measured and not assumed.
 
 ```python
-N_PARTICLES = 2000    # per shell (production uses ~10000 — see below)
+N_PARTICLES = 2000    # per shell (production uses ~10000; see below)
 REPS = 8              # independent replications -> the spread between estimates
 
 results = Parallel(n_jobs=-1)(
@@ -59,12 +63,12 @@ results = Parallel(n_jobs=-1)(
 )
 est = combine_replications(results)
 
-print(f"P(LoS) = {est.p_los:.2e}   per aircraft")
+print(f"P(LoS) = {est.p_los_ac:.2e}   per aircraft")
 print(f"collapsed replications: {est.n_collapsed}/{REPS}")
 ```
 
 ```
-P(LoS) = 4.17e-05   per aircraft
+P(LoS) = 1.15e-04   per aircraft
 collapsed replications: 0/8
 ```
 
@@ -88,9 +92,9 @@ for d, s in zip(levels, mean_surv):
 
 This trial is intentionally quick: `dt = 0.5 s`, 2000 particles, and 8 replications. Thus the replications are far apart, and the estimate has some discretisation bias. To make it a production estimate, change three settings:
 
-- **`dt = 0.2 s`** — a smaller step decreases the shell overshoot. Overshoot occurs when a particle moves past a shell between two timesteps.
-- **more particles** (approximately 10000) — this gives a margin against collapse in the deep tail.
-- **more replications** — this brings the independent estimates closer together, and it also uses more cores.
+- **`dt = 0.2 s`**: a smaller step decreases the shell overshoot. Overshoot occurs when a particle moves past a shell between two timesteps.
+- **more particles** (approximately 10000): this gives a margin against collapse in the deep tail.
+- **more replications**: this brings the independent estimates closer together, and it also uses more cores.
 
 Those are the settings of the [validation](validation.md) sweep. No other part of the code changes.
 

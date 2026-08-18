@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Ring
 
 A **ring** is the multi-aircraft stress case. It places `n` aircraft evenly around a centre and sends every one of them through the middle. Each aircraft then resolves against `n - 1` others at the same time, and each resolution changes the geometry that the others are solving. A ring of `n` aircraft holds `n * (n - 1) / 2` pairs, so a fleet size (`n`) of 6 is 15 pairs and a fleet size of 8 is 28. Every one of those pairs can lose separation.
@@ -16,9 +20,9 @@ This library provides three ring scenarios. All three place the fleet the same w
 
 `SwapRing` is `n / 2` simultaneous head-on pairs, all crossing the middle. `ConvergingRing` is the symmetric superconflict, where the goal itself is incompatible with separation. The aircraft cannot all occupy the centre, because the protected zone (`rpz`) forbids it, so the [separation stack](../separation/index.md) can only hold them apart as they close.
 
-`CrossingRing` cruises straight across the diameter and carries no goal at all. That is what makes its declared `speed` the speed actually flown. A goal would turn each aircraft's nominal into a position command, and a position command is tracked by the airframe's own guidance. A [multirotor](../aircraft/multirotor.md) reads only the range to the waypoint and flies `min(v_max, sqrt(2 * ax * range))`. At a range of 1400 m a DJI M600 gives `min(18.0, 118.3)`, so an M600 asked to cruise at 14 m/s would cover the ring at its 18 m/s ceiling instead. With no goal each aircraft holds the constant cruise it was placed at, and the geometry is then the geometry.
+`CrossingRing` cruises straight across the diameter and carries no goal at all. That is what makes its declared `speed` the speed actually flown. A goal would turn each aircraft's nominal into a position command, and a position command is tracked by the airframe's own guidance. A [multirotor](../aircraft/kinematics/multirotor.md) reads only the range to the waypoint and flies `min(v_max, sqrt(2 * ax * range))`. At a range of 1400 m a DJI M600 gives `min(18.0, 118.3)`, so an M600 asked to cruise at 14 m/s would cover the ring at its 18 m/s ceiling instead. With no goal each aircraft holds the constant cruise it was placed at, and the placed geometry is exactly the geometry flown.
 
-At even `n` the first two place the same positions on the same tracks, and differ only in that `SwapRing` carries a goal and `CrossingRing` cruises. At odd `n` they part company. `SwapRing` aims at a start that is not the antipode, so its routes miss the centre by `radius * cos(180 * (n // 2) / n)`, which is 750 m at `n = 3` on a 1500 m ring. Reach for `CrossingRing` when the fleet size is the variable, because a sweep over `SwapRing` steps the geometry at every odd value as well as the size.
+At even `n` the first two place the same positions on the same tracks, and differ only in that `SwapRing` carries a goal and `CrossingRing` cruises. At odd `n` they part company. `SwapRing` aims at a start that is not the antipode, so its routes miss the centre by `radius * cos(180 * (n // 2) / n)`, which is 750 m at `n = 3` on a 1500 m ring. Use `CrossingRing` when the fleet size is the variable, because a sweep over `SwapRing` steps the geometry at every odd value as well as the size.
 
 `SwapRing` is also the one ring with no `t_to_centre`. Its routes do not always reach the centre, so a flight time to the centre would name an arrival that never happens.
 
@@ -34,7 +38,7 @@ from opencdarr.scenario import CrossingRing
 SPEEDS = (14.0, 20.0, 17.0, 17.0, 14.0, 20.0)  # m/s, in ring order
 ```
 
-At a fleet size (`n`) of 6 the ring pairs aircraft `k` with aircraft `k + 3`, so this order makes every head-on pair a mixed pair. At one fleet speed the two sizing knobs below are the same knob, related by `radius = speed * t_to_centre`. For this fleet they are two different experiments.
+At a fleet size (`n`) of 6 the ring pairs aircraft `k` with aircraft `k + 3`, so this order makes every head-on pair a mixed pair. At one fleet speed the two sizing parameters below are the same parameter, related by `radius = speed * t_to_centre`. For this fleet they are two different experiments.
 
 ## Sizing by arrival time
 
@@ -62,9 +66,9 @@ The fleet is a ring again, but it is no longer a simultaneous encounter. The tim
 
 For `ConvergingRing` the effect is sharper, because there the centre is the goal rather than a point on the way. Under `radius` the slow aircraft do not merely arrive late. They arrive to find the fast ones already holding station at the middle.
 
-Reach for `t_to_centre` when the `n`-aircraft conflict has to be one event. Reach for `radius` when the start circle is what has to be held fixed, and a staggered arrival is either acceptable or is itself the subject.
+Use `t_to_centre` when the `n`-aircraft conflict has to be one event. Use `radius` when the start circle is what has to be held fixed, and a staggered arrival is either acceptable or is itself the subject.
 
-## Both knobs at once
+## Both parameters at once
 
 Giving both is refused rather than resolved by precedence.
 
@@ -81,7 +85,7 @@ A ring is placed rather than drawn. Its `draw` reads no random number, so the ge
 
 ## In the code
 
-The three scenarios and their function forms are in [`opencdarr/scenario/ring.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/scenario/ring.py). `_start_radii` is where the difference between the two sizing knobs is written down, and `radii()` is the accessor that reports the result.
+The three scenarios and their function forms are in [`opencdarr/scenario/ring.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/scenario/ring.py). `_start_radii` is where the difference between the two sizing parameters is written down, and `radii()` is the accessor that reports the result. The multi-aircraft stress case is worked in [`circle_scenario.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/circle_scenario.ipynb), a ring swept over fleet size with and without resolution, and [`ring_mc_vs_ips.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/ring_mc_vs_ips.ipynb), two to four aircraft on a ring under both estimators; the mixed-fleet declaration is worked in [`mixed_fleet.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/mixed_fleet.ipynb).
 
 Two committed run files fly a ring. [`configs/ring.yaml`](https://github.com/fazlurnu/OpenCDaRR/blob/main/configs/ring.yaml) is an eight-aircraft `crossing_ring` at one fleet speed of 10.2889 m/s on a start circle (`radius`) of 1500 m, which is 145.8 s to the centre and 28 pairs. [`configs/ring_t3.yaml`](https://github.com/fazlurnu/OpenCDaRR/blob/main/configs/ring_t3.yaml) is the six-aircraft ring of [T3](../../tutorials/t3-setting-up-an-experiment.md), sized by a flight time to the centre (`t_to_centre`) of 100 s, which is 1400 m for its uniform 14 m/s fleet.
 

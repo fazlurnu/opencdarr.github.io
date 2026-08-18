@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Conflict Resolution
 
 Once a pair is [detected](conflict-detection.md) in conflict, the resolver computes the avoidance manoeuvre. **The input** to the conflict resolution is the ownship state, the set of intruders it is currently in conflict with, and the protected-zone radius `rpz`. Then, **the output** is a `MotionCommand` carrying the ground velocity that clears them.
@@ -7,7 +11,7 @@ resolver = MVP(margin=1.05)          # or VO(margin=1.05)
 command = resolver.resolve(own, conflicting_intruders, rpz=50.0)
 ```
 
-That output velocity is vehicle-neutral, so each airframe flies it its own way. A multirotor takes it directly, and a fixed-wing is [turned onto it](../aircraft/fixedwing.md#flying-a-velocity-command) under its bank limit.
+That output velocity is vehicle-neutral, so each airframe flies it its own way. A multirotor takes it directly, and a fixed-wing is [turned onto it](../aircraft/kinematics/fixedwing.md#flying-a-velocity-command) under its bank limit.
 
 This library provides two resolvers, and they embody two different ideas of what clearing an intruder means. Both can take a `margin` ($\ge 1$) that enlarges the protected zone they clear to, so the manoeuvre finishes with a buffer beyond the protected zone.
 
@@ -42,7 +46,7 @@ For a single pair the two often resolve in a similar direction, but not identica
   <figcaption>MVP against VO on one crossing conflict (no noise, both aircraft cooperating). Both clear to a <strong>102 m</strong> miss, so the difference is in the manoeuvre. VO's shortest way out of the cone commits to a wider berth, a 65 m cross-track detour against MVP's 36 m. Neither is simply better. The gap widens with several intruders, where MVP sums and VO takes the union.</figcaption>
 </figure>
 
-## The contract
+## The interface
 
-A resolver of your own subclasses [`ConflictResolver`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/base.py) and implements one method, `resolve(own, intruders, rpz, preferred) -> MotionCommand`, returning the ground-velocity command that clears the conflict. It receives the **set** of intruders currently in conflict — length one in a pairwise encounter — so a multi-intruder resolver composes them its own way, as the sum-versus-union split above shows. Like the other two stages it must be pure, with no state on the object between calls. Both built-ins live in [`opencdarr/cr/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/cr) as references.
+A resolver of your own subclasses [`ConflictResolver`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cr/base.py) and implements one method, `resolve(own, intruders, rpz, preferred) -> MotionCommand`, returning the ground-velocity command that clears the conflict. It receives the **set** of intruders currently in conflict (length one in a pairwise encounter), so a multi-intruder resolver composes them its own way, as the sum-versus-union split above shows. Like the other two stages it must be pure, with no state on the object between calls. Both built-ins live in [`opencdarr/cr/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/cr) as references. The notebook for this page is [`examples/handbook/separation.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/separation.ipynb): its resolution section flies the crossing above under each resolver. For the two resolvers under position uncertainty, see [`resolver_comparison.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/resolver_comparison.ipynb) and the [pairwise case study](../experiments/example-pairwise-conflict.md).
 

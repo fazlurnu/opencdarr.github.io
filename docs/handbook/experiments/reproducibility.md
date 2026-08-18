@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Reproducibility
 
 Each number that an experiment reports is a function of four items only: the base configuration,
@@ -16,7 +20,7 @@ construction. An offset of the form `seed + k` is not, because those trees can c
 
 Each `SeedSequence` has one of two roles, and never both:
 
-- an **internal node**, which spawns child sequences — one substream for each component of a run,
+- an **internal node**, which spawns child sequences: one substream for each component of a run,
   or one for each clone of an IPS particle;
 - a **leaf**, which gives the `Generator` that one function draws from.
 
@@ -128,4 +132,4 @@ The seed tree is [`opencdarr/rng.py`](https://github.com/fazlurnu/OpenCDaRR/blob
 [`opencdarr/cache.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cache.py)
 (`code_fingerprint`, `run_key`, `load_or_run`). `identity`, `CacheIdentityError`, the card writer
 and `run_one_experiment` are in
-[`opencdarr/experiment.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/experiment.py).
+[`opencdarr/experiment/`](https://github.com/fazlurnu/OpenCDaRR/tree/main/opencdarr/experiment).

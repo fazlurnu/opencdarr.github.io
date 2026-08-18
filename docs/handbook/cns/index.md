@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # CNS
 
 **Communication, navigation, and surveillance (CNS)** is the layer that decides *what each aircraft perceives about the other aircraft*. The layer also decides how incorrect that knowledge is. The separation algorithms (CDaRR) use only the data that CNS gives them. They never use the ground truth. What an aircraft perceives about itself is not the same as what an intruder perceives about it. This difference is **asymmetric situational awareness**. This layer models the difference as accurately as the CNS systems permit.
@@ -14,9 +18,9 @@ flowchart LR
     P --> SEP([separation stack])
 ```
 
-- **[Navigation](navigation.md)** — how an aircraft measures its *own* state before it broadcasts. The error occurs at the source, and the model applies the error one time. Thus all the other aircraft get the same error through the broadcast.
-- **[Communication](communication.md)** — if the broadcast arrives, and how late it arrives. The model draws the reception and the latency independently for each directed link.
-- **[Surveillance](surveillance.md)** — the data that a receiver holds about a source. This data is the last message from that link. Before the first contact, the receiver holds no data.
+- **[Navigation](navigation.md)**: how an aircraft measures its *own* state before it broadcasts. The error occurs at the source, and the model applies the error one time. Thus all the other aircraft get the same error through the broadcast.
+- **[Communication](communication.md)**: if the broadcast arrives, and how late it arrives. The model draws the reception and the latency independently for each directed link.
+- **[Surveillance](surveillance.md)**: the data that a receiver holds about a source. This data is the last message from that link. Before the first contact, the receiver holds no data.
 
 Each part is a model with one method. Replace an implementation to change the experiment. This page is the overview. Each part has its own page with more data.
 
@@ -32,4 +36,6 @@ The figure below shows the **asymmetric situational awareness**. Each row shows 
 </figure>
 
 The **[Communication](communication.md)**, **[Navigation](navigation.md)**, and **[Surveillance](surveillance.md)** pages give the full explanation of this figure.
+
+The notebooks for this chapter are [`navigation.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/navigation.ipynb), [`communication.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/communication.ipynb), and [`surveillance.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/surveillance.ipynb); [`the_whole_chain.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/the_whole_chain.ipynb) walks the full chain, one aircraft and one tick at a time.
 

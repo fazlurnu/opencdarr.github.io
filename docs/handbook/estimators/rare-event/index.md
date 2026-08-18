@@ -1,8 +1,12 @@
+---
+authorship: opus-5
+---
+
 # Rare-event simulation: the short theory
 
 A collision must be rare, and that fact is what makes it difficult to measure. If loss of separation occurs one time in a million encounters, plain Monte Carlo needs approximately one million runs to see one event. A batch that reads *zero* events does not tell you if the true rate is $10^{-6}$ or $10^{-9}$. At the [safety targets that are applicable](../../../index.md#the-motivation), near $10^{-9}$ for each flight hour, brute-force sampling is slow and also unreliable.
 
-The answer in OpenCDaRR is a **rare-event estimator**. It is in the [`ips`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/ips.py) module, and it uses the fixed-effort **interacting particle system** (IPS) of Blom et al. (2007). This method is also called multi-level splitting. It does not wait for the rare event to occur. It keeps a fixed population of particles on the trajectories that already move to the event, and it reaches probabilities that plain sampling cannot.
+The answer in OpenCDaRR is a **rare-event estimator**. It is in the [`estimate/ips`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/estimate/ips.py) module, and it uses the fixed-effort **interacting particle system** (IPS) of Blom et al. (2007). This method is also called multi-level splitting. It does not wait for the rare event to occur. It keeps a fixed population of particles on the trajectories that already move to the event, and it reaches probabilities that plain sampling cannot.
 
 This page gives the method. To run it, refer to [Running a simulation](running.md). For the evidence that it is correct, refer to [Validation](validation.md). For a plotted example of one run, refer to [`rare_event_ips_illustrated.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/rare_event_ips_illustrated.ipynb).
 
@@ -16,9 +20,9 @@ $$\gamma = \prod_{k=1}^{m} \gamma_k, \qquad \gamma_k = P(\tau_k < T \mid \tau_{k
 
 The estimator calculates that product with a fixed population of $N$ particles (Blom et al. 2007, §10.2.4). For each shell $k$, it does three steps:
 
-1. **Mutation** — move each particle forward (`env.advance`) until its running-minimum separation crosses $d_k$, or until the encounter ends first. A particle that crosses is a *survivor*, and the code holds it at the state of the crossing. A particle whose encounter ends first is *dropped*.
-2. **Selection** — count the survivors. The conditional factor is $\hat p_k = S_k / N$.
-3. **Splitting** — sample the $S_k$ survivors again, with replacement, back to $N$ particles. This puts the effort on the trajectories that came nearer.
+1. **Mutation**: move each particle forward (`env.advance`) until its running-minimum separation crosses $d_k$, or until the encounter ends first. A particle that crosses is a *survivor*, and the code holds it at the state of the crossing. A particle whose encounter ends first is *dropped*.
+2. **Selection**: count the survivors. The conditional factor is $\hat p_k = S_k / N$.
+3. **Splitting**: sample the $S_k$ survivors again, with replacement, back to $N$ particles. This puts the effort on the trajectories that came nearer.
 
 $$\hat P = \prod_{k=1}^{m} \hat p_k = \prod_{k=1}^{m} \frac{S_k}{N}.$$
 
@@ -26,7 +30,7 @@ No step measures a rare quantity directly. Each survival fraction is a usual num
 
 <figure markdown="span">
   ![Two panels from one IPS run. Left, a scatter plot of the running-minimum separation of each particle at the end of each shell leg, against a black staircase of the shell distances that descends. The particles that reached the shell are blue, and they are on the staircase or below it. The particles whose encounter ended first are red, and they are above it. After the first shell, all the points are near the staircase. Right, on a logarithmic axis, the survival fractions for each shell stay high and flat, and their running product decreases to the rare probability](../../../assets/img/rare-event-ips-ladder.png)
-  <figcaption>One replication: 400 particles, 17 shells, <code>rpz</code> = 50 m. <strong>Left</strong> — the running-minimum separation of each particle at the end of its leg, blue if it reached the shell (the black staircase) and red if the encounter ended first. <strong>Right</strong> — the 17 survival fractions stay between 0.18 and 0.91, but their running product falls to P̂ = 8.2 × 10⁻⁵.</figcaption>
+  <figcaption>One replication: 400 particles, 17 shells, <code>rpz</code> = 50 m. <strong>Left</strong>: the running-minimum separation of each particle at the end of its leg, blue if it reached the shell (the black staircase) and red if the encounter ended first. <strong>Right</strong>: the 17 survival fractions stay between 0.18 and 0.91, but their running product falls to P̂ = 8.2 × 10⁻⁵.</figcaption>
 </figure>
 
 The hats show the difference. $\gamma_k$ is the true conditional probability, and the model sets that number. $\hat p_k = S_k/N$ is the count from one run, thus it changes with the seed. If 300 particles of 1000 go through a shell, the value is $0.300$. The next seed can give $0.287$.
@@ -66,7 +70,7 @@ from the event that is reported.
 
 The rare set is "one pair or more reaches `rpz`", thus what splitting estimates directly is a
 **reach probability for each run**: a run with five simultaneous losses counts the same as a run
-with one. That is not the number the library reports. `p_los` is
+with one. That is not the number the library reports. `p_los_ac` is
 [for each aircraft](../monte-carlo.md#what-the-numerator-counts), and the step between the two is
 the **tail leg**.
 
@@ -84,7 +88,7 @@ At two aircraft the tail changes nothing, because $A$ is always 2 and the two ai
 cancel the two aircraft in a run. Above two aircraft it is the difference between a measurement and
 an assumption.
 
-Note that the precision of `p_los` comes from the number of **distinct** survivors (`n_lineages`)
+Note that the precision of `p_los_ac` comes from the number of **distinct** survivors (`n_lineages`)
 and not from `n_particles`: resampling fills the cloud with clones, and a clone gives no new
 information about $A$.
 

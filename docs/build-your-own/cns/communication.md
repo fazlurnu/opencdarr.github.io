@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Communication — extending the channel
 
 [`Comm`](../../handbook/cns/communication.md) delivers a broadcast over each directed

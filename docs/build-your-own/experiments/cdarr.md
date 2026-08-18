@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # CDaRR
 
 The [separation-manager pages](../separation-manager/index.md) write one component at a time and look at a single encounter. This page assembles all three — a conflict **detector**, a **resolver** and a **recovery criterion**, none of them from the library — into one stack, and measures it against `StateBased` + `MVP` + `FTR` over 500 encounters per condition.

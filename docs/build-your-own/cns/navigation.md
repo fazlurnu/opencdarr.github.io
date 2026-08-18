@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Navigation — extending the fix
 
 [`GnssNavigation`](../../handbook/cns/navigation.md) perturbs position and velocity

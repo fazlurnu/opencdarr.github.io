@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # T4. Two estimators, one experiment
 
 T3 measured a probability with plain Monte Carlo. Monte Carlo counts events. It works while the events are frequent enough to count, and it stops working when they are not.

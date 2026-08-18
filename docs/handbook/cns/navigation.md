@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Navigation
 
 Navigation is the **N** of [CNS](index.md). An aircraft measures its own position, and the measurement has a small error. That is the full task. One aircraft, its own sensor, one measurement. **The input** to the navigation model is the ground truth of the aircraft, the current time, and a random stream. The state itself carries the accuracy of the sensor as `pos_ci95` and `vel_ci95`. Then, **the output** is a `Message`, which holds the fix with its noise and the time of the measurement.
@@ -30,7 +34,7 @@ This library provides one model, four error shapes, one degradation effect, and 
 | quality | `NavQuality` | the increase above the nominal error, and the part that the broadcast declares |
 | interfaces | `NavigationModel`, `NoiseDistribution`, `NavEffect` | for your own implementation |
 
-That is the complete list. This library does not provide a bias that increases with time, a full multipath model, or a receiver that becomes worse above a city. To add one of these, refer to [the contract](#the-contract). The task is smaller than it appears.
+That is the complete list. This library does not provide a bias that increases with time, a full multipath model, or a receiver that becomes worse above a city. To add one of these, refer to [the interface](#the-interface). The task is smaller than it appears.
 
 ## Accuracy belongs to the aircraft, not the model
 
@@ -38,8 +42,8 @@ The usual design is `GnssNavigation(accuracy=20.0)`. This library does not use t
 
 A fleet has one navigation model, but it has many receivers, and the receivers are not equally good. One aircraft can have a survey-grade unit, and another aircraft can have a low-cost unit. The same aircraft can have a good fix above open country and a bad fix between buildings. Thus the two accuracy values belong to the **aircraft**:
 
-- `pos_ci95` — the accuracy of the position in metres
-- `vel_ci95` — the accuracy of the velocity in m/s
+- `pos_ci95`: the accuracy of the position in metres
+- `vel_ci95`: the accuracy of the velocity in m/s
 
 The default value of the two is `0.0`, which is a perfect sensor. Thus a run without navigation noise needs no configuration.
 
@@ -134,7 +138,7 @@ Two details are more important than they appear.
 
 If your model has no state, ignore `evolve`. The default implementation does nothing, and it makes no draw.
 
-## The contract
+## The interface
 
 ### An error shape
 
@@ -172,4 +176,6 @@ The score of a run uses the **true** states. The navigation error changes what t
 `GnssNavigation` is in [`opencdarr/cns/navigation.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/navigation.py), and the four error shapes are in [`noise_distributions.py`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/cns/noise_distributions.py). To switch it on, pass `navigation=` to `run_encounter` or `run_fleet`. Also pass its own RNG substream `rng=`, which stays separate from the communication stream. Without `navigation=`, each aircraft measures its own state exactly. The two accuracy values stay on the aircraft state as `pos_ci95` and `vel_ci95`, and a run with no navigation model never reads them.
 
 **Error shapes and `NavEffect` implementations** add the effects that `GnssNavigation` does not have, and a subclass of the model is not necessary. A shape is a function, and an effect holds its own state. Thus a receiver outage and a bias that increases with time are two effects, not a new class for the combination. To write a shape, an effect, or a full navigation model, refer to [Build your own → Navigation](../../build-your-own/cns/navigation.md).
+
+The notebook for this page is [`examples/handbook/navigation.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/navigation.ipynb): it reproduces the 0.4085 factor, the four error shapes, the worst-fix table, the declared-accuracy example, the outage trace, and the `uniform_disk` shape above.
 

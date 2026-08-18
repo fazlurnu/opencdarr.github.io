@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Future work
 
 This page is the backlog. Everything OpenCDaRR is missing, or could do better, is one row of the

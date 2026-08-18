@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # T3. Setting up an experiment
 
 Previously, T2 estimated P(LoS) for one pairwise encounter configuration using `estimate_p_los`.

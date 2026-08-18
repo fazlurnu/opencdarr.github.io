@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # T1. Under CNS uncertainty
 
 T0 flew a pairwise conflict with the built-in `Performance` and `Kinematics` with the library, and with perfect information. The goal of this notebook is to demonstrate how to:

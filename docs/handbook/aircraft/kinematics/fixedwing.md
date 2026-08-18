@@ -1,6 +1,10 @@
+---
+authorship: opus-5
+---
+
 # Fixed-wing
 
-The fixed-wing is a **coordinated-turn point mass**. It flies its airspeed vector, turns by banking, and cannot stop or move sideways, so it must stay above stall the whole time. The bank angle is part of the state and changes at a finite roll rate, so a turn rolls in, holds, and rolls out rather than snapping. The model is re-derived from the kinematic point-mass model of [Reyner and Liem](https://www.mdpi.com/2504-446X/10/5/337), the same kinematics [PX4](https://docs.px4.io/main/en/ros/offboard_control)'s fixed-wing controller implements. This library uses a small-UAV envelope, with cruise up to `v_max` 25 m/s, stall `v_min` 12 m/s, airspeed acceleration `a_x` 2 m/s², bank up to `phi_max` 44°, and roll rate 60 °/s. These are a [`Performance`](performance.md) value, so a different airframe is a different value, not a different model.
+The fixed-wing is a **coordinated-turn point mass**. It flies its airspeed vector, turns by banking, and cannot stop or move sideways, so it must stay above stall the whole time. The bank angle is part of the state and changes at a finite roll rate, so a turn rolls in, holds, and rolls out rather than snapping. The model is re-derived from the kinematic point-mass model of [Reyner and Liem](https://www.mdpi.com/2504-446X/10/5/337), the same kinematics [PX4](https://docs.px4.io/main/en/ros/offboard_control)'s fixed-wing controller implements. This library uses a small-UAV envelope, with cruise up to `v_max` 25 m/s, stall `v_min` 12 m/s, airspeed acceleration `a_x` 2 m/s², bank up to `phi_max` 44°, and roll rate 60 °/s. These are a [`Performance`](../performance.md) value, so a different airframe is a different value, not a different model.
 
 ## Equation of motion
 
@@ -59,8 +63,8 @@ MotionCommand(target_course=90.0, target_airspeed=25.0)  # a wide turn
 ```
 
 <figure markdown="span">
-  ![Two fixed-wing turns at 15 and 25 m/s; the faster one turns wider, with the bank angle rolling in to 44 degrees and back out](../../assets/img/fw-turn.png)
-  <figcaption>The same bank, two airspeeds. Left, the ground tracks — both bank to 44°, but the turn radius grows with the square of the speed, so 15 m/s turns in about 24 m and 25 m/s in about 66 m. Right, the bank angle rolls in at the roll rate, holds at the cap, and rolls back out.</figcaption>
+  ![Two fixed-wing turns at 15 and 25 m/s; the faster one turns wider, with the bank angle rolling in to 44 degrees and back out](../../../assets/img/fw-turn.png)
+  <figcaption>The same bank, two airspeeds. Left, the ground tracks: both bank to 44°, but the turn radius grows with the square of the speed, so 15 m/s turns in about 24 m and 25 m/s in about 66 m. Right, the bank angle rolls in at the roll rate, holds at the cap, and rolls back out.</figcaption>
 </figure>
 
 ### Following a path
@@ -74,7 +78,9 @@ MotionCommand(target_position=C, target_loiter_radius=60.0, target_airspeed=18.0
 ```
 
 <figure markdown="span">
-  ![Three position modes: a pure-pursuit go-to straight at the point, an L1 leg-tracking that curves onto the line, and a loiter orbit](../../assets/img/fw-paths.png)
-  <figcaption>Three position modes, same start and airspeed. Left, a bare go-to steers straight at the point, with no regard for a leg. Middle, adding the leg start tracks the line with L1 — the aircraft curves onto the leg rather than heading directly at the point. Right, a loiter radius makes it orbit the point, since it cannot hover. The radius must exceed the minimum turn radius for the orbit to hold.</figcaption>
+  ![Three position modes: a pure-pursuit go-to straight at the point, an L1 leg-tracking that curves onto the line, and a loiter orbit](../../../assets/img/fw-paths.png)
+  <figcaption>Three position modes, same start and airspeed. Left, a bare go-to steers straight at the point, with no regard for a leg. Middle, adding the leg start tracks the line with L1: the aircraft curves onto the leg rather than heading directly at the point. Right, a loiter radius makes it orbit the point, since it cannot hover. The radius must exceed the minimum turn radius for the orbit to hold.</figcaption>
 </figure>
+
+Every figure on this page comes from [`examples/handbook/kinematics_fixedwing.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/handbook/kinematics_fixedwing.ipynb), driving the real `FixedWing.step` under the `SMALL_FIXEDWING` envelope.
 
