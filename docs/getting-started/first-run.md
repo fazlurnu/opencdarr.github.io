@@ -1,6 +1,10 @@
+---
+authorship: fazlur
+---
+
 # A first run
 
-Let's put two aircraft on a collision course, one multirotor flying north to a waypoint and one fixed-wing crossing eastward. We fly that encounter first with nothing switched on, then add a separation stack and watch it clear. Finally, we put three aircraft in conflict at the same time.
+Let's put two aircraft on a collision course, one multirotor flying north to a waypoint and one fixed-wing crossing eastward. First, we simulate that encounter with no separation management, then we keep them separated with the algorithm. Finally, we put three aircraft in conflict at the same time.
 
 ## Your first agent
 
@@ -12,7 +16,9 @@ from opencdarr.state import AircraftState
 copter_init_state = AircraftState(id="COPTER", lat=52.0, lon=4.0, trk=0.0, gs=18.0, yaw=0.0)
 ```
 
-Then, because this simulator is agent-based, we wrap that state in an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py). An agent is an `AircraftState`, a [`performance`](../handbook/aircraft/performance.md) envelope, a [`kinematics`](../handbook/aircraft/index.md) model, and an [`autopilot`](../handbook/aircraft/autopilot.md) that flies the mission. For this first one we want an `M600`, which is a `Multirotor`. Its mission is to reach a single waypoint, so we import `WaypointAutopilot` and `Mission`. We put that waypoint straight ahead on the current track, 75 s of cruise away, with `geo.forward`.
+Then, because this simulator is agent-based, we wrap that state in an [`Agent`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py). An agent is an object that holds `AircraftState`, a [`performance`](../handbook/aircraft/performance.md) envelope, a [`kinematics`](../handbook/aircraft/index.md) model, and an [`autopilot`](../handbook/aircraft/autopilot.md) that flies the mission.
+
+For this first one we want an `M600`, which is a `Multirotor`. Its mission is to reach a single waypoint, so we import `WaypointAutopilot` and `Mission`. We put that waypoint straight ahead on the current track, 75 s of cruise away, with `geo.forward`.
 
 ```python
 from opencdarr.fleet import Agent
@@ -39,9 +45,9 @@ Agent COPTER
 
 ## Your first intruder
 
-In separation management we usually want a conflict to simulate. Rather than guessing where to put a second aircraft, we can use the [`create_conflict`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/scenario/pairwise.py) function to build the intruder's `AircraftState` for us. It is adapted from [`BlueSky`](https://github.com/TUDelft-CNS-ATM/bluesky). Here the intruder crosses at 90° (`dpsi`), misses by 0 m at the closest point of approach (`dcpa`), and enters the 50 m protected zone (`rpz`) 30 s from now (`tlos`), flying at 15 m/s (`gs_intr`).
+In separation management, we usually want a conflict to simulate. Rather than guessing where to put a second aircraft, we can use the [`create_conflict`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/scenario/pairwise.py) function, adapted from [`BlueSky`](https://github.com/TUDelft-CNS-ATM/bluesky), to build the intruder's `AircraftState` for us. Here the intruder crosses at 90° (`dpsi`), with 0 m at the closest point of approach (`dcpa`), and enters the 50 m protected zone (`rpz`) 30 s from now (`tlos`), flying at 15 m/s (`gs_intr`).
 
-This second aircraft is a `FixedWing`, so it has different kinematics from the multirotor. Its performance envelope is `SMALL_FIXEDWING`, and we want it to cruise, so we give it a `CruiseAutopilot` that holds its track and speed.
+This second aircraft is a `FixedWing`, so it has different kinematics from the multirotor. Its performance envelope is `SMALL_FIXEDWING`, and we want it to cruise with no specific waypoint target, so we give it a `CruiseAutopilot` that holds its track and speed.
 
 ```python
 from opencdarr.scenario import create_conflict
@@ -68,7 +74,7 @@ Agent PLANE
 
 We have created the agents that we want to simulate. For the simulation, we gather them into one list, `agents`, and pass it to [`run_fleet`](https://github.com/fazlurnu/OpenCDaRR/blob/main/opencdarr/fleet.py). There are a few input arguments to set. Here we use a 50 m radius of protected zone (`rpz`), a simulation timestep (`dt`) of 0.1 s, and we stop the simulation 10 s after the fleet has been continuously clear (`done_timeout`).
 
-We pass no detector, so nothing is predicted and `conflict` stays `no`. The loss of separation (LoS) and the minimum separation are still measured on the true states, which is exactly the baseline we want here. Finally, `record=True` keeps the trajectory so that we can plot it.
+We pass no detector, so nothing is predicted and `conflict` stays `no`. The loss of separation (LoS) and the minimum separation are measured on the true states, even when CNS uncertainty exists. Finally, `record=True` keeps the trajectory so that we can plot it. Notice that when you print the `run`, you get an overview of the simulation, including how it `ended`.
 
 ```python
 from opencdarr.fleet import run_fleet
@@ -101,9 +107,9 @@ FleetOutcome
 
 ## With conflict resolution
 
-Now, we are adding the conflict detection (CD), conflict resolution (CR), and recovery criterion (CRR). First a [detector](../handbook/separation/conflict-detection.md), returning a `bool` of whether a separation manoeuvre should start or not. Then a [resolver](../handbook/separation/conflict-resolution.md), telling the aircraft where to go with a `MotionCommand`. Finally a [recovery criterion](../handbook/separation/recovery-criteria.md), telling it when the manoeuvre can be disengaged. Here we use `StateBased` detection, the `MVP` resolver, and `PastCPA` recovery. Detection needs a horizon, so we also set the threshold of the lookahead time (`t_lookahead`) to 20 s. A `VO` resolver drops into the same slot in case you want a quick try.
+Now, we are adding the conflict detection (CD), conflict resolution (CR), and recovery criterion (CRR). First a [detector](../handbook/separation/conflict-detection.md), returning a `bool` of whether a separation manoeuvre should start or not. Then a [resolver](../handbook/separation/conflict-resolution.md), telling the aircraft where to go with a `MotionCommand`. Finally a [recovery criterion](../handbook/separation/recovery-criteria.md), telling it when the manoeuvre can be disengaged. Here we use `StateBased` detection, the `MVP` resolver, and `PastCPA` recovery. Detection needs a time horizon, so we also set the threshold of the lookahead time (`t_lookahead`) to 20 s. A `VO` resolver is imported and just a variable change away if you want to try.
 
-This time we also let the copter finish its mission. The run ends once every waypoint-targeting aircraft is within 20 m of its waypoint (`stop_within`), and the `done_timeout` is set far out of the way at 1000 s.
+This time we also let the copter finish its mission. The run ends once every waypoint-targeting aircraft is within 20 m of its waypoint (`stop_within`), or the `done_timeout` is reached.
 
 ```python
 from opencdarr.cd import StateBased
@@ -189,11 +195,9 @@ FleetOutcome
   <figcaption>Three aircraft in conflict at once. The two crossing pairs bottom out at 52.19 m and 54.72 m, outside the 50 m protected zone.</figcaption>
 </figure>
 
-## Where to go next
+## Next
 
-Every piece assembled above, the airframes, the autopilot, and the three parts of the separation stack, is a value or a single-method object passed to `run_fleet`. The [Handbook](../handbook/index.md) explains each built-in and states the contract for replacing it, including the [CNS](../handbook/cns/index.md) layers and the [wind](../handbook/wind.md) that make a run less than perfect. One run is one sample of a random outcome, and [Estimators](../handbook/estimators/index.md) turns many runs into a rate.
+The next page explains briefly how every piece is connected into the simulation.
 
 !!! code "Run it yourself"
-    Every step on this page is the notebook [`examples/tutorial/L0_a_first_run.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/tutorial/L0_a_first_run.ipynb), top to bottom, and the three figures are its own output.
-
-That was the shape of an answer. The course that teaches you to build your own starts at [Tutorials](../tutorials/index.md).
+    Every step on this page is the notebook [`examples/tutorial/L0_a_first_run.ipynb`](https://github.com/fazlurnu/OpenCDaRR/blob/main/examples/tutorial/L0_a_first_run.ipynb).

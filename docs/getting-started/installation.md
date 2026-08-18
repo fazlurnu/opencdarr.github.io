@@ -1,3 +1,7 @@
+---
+authorship: opus-5
+---
+
 # Installation
 
 OpenCDaRR is not on PyPI, yet. Install it from a copy of the repository. Before you start, you need to have `Python >= 3.11`, `Git`, and `conda/venv` for the virtual environment.
