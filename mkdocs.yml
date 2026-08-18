@@ -67,7 +67,7 @@ nav:
       - tutorials/index.md
       - "T1. Under CNS uncertainty": tutorials/t1-cns-uncertainty.md
       - "T2. Using built-in estimator": tutorials/t2-monte-carlo-with-config-and-scenario.md
-      - "T3. Setting up an experiment": tutorials/t3-setting-up-an-experiment.md
+      - "T3. Six aircraft in an experiment": tutorials/t3-setting-up-an-experiment.md
       - "T4. Two estimators": tutorials/t4-two-estimators.md
       - "T5. Calibrating the ladder": tutorials/t5-calibrating-the-ladder.md
 # The L-series that used to sit here is gone: superseded by the T-series above,

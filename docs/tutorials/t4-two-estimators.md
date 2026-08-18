@@ -6,7 +6,7 @@ authorship: opus-5
 
 T3 measured a probability with plain Monte Carlo. Monte Carlo counts events. It works while the events are frequent enough to count, and it stops working when they are not.
 
-This notebook walks into that wall on purpose, and then gets past it. It sweeps with Monte Carlo, narrows to the conditions Monte Carlo cannot measure, and estimates those again with Interacting Particle System (IPS), the rare-event estimator. Between those last two runs only the `backend=` argument changes: the encounter, the aircraft, the stack and the axes stay the same objects.
+This notebook walks into that wall on purpose, and then gets past it. It sweeps with Monte Carlo, narrows to the conditions Monte Carlo cannot measure, and estimates those again with IPS, the rare-event estimator. Between those last two runs only the `backend=` argument changes: the encounter, the aircraft, the stack and the axes stay the same objects.
 
 The notebook also adds a third resolver, which you can write yourself.
 
@@ -14,15 +14,15 @@ The notebook also adds a third resolver, which you can write yourself.
 
 The encounter is a pairwise conflict. Two M600 multirotors fly at 20 kt (10.2889 m/s). They start 60 s from a loss of separation. The file leaves the crossing angle, the miss distance and the passing side to be drawn per encounter, so two seeds give two different conflicts at the same difficulty. T4.2 then pins the crossing angle, because it becomes one of the swept axes. The miss distance and the passing side stay drawn.
 
-That scenario is written in `configs/pairwise_t4.yaml`. `load_run` then reads the file and returns the three values an experiment takes: a `Config` of plain numbers, a `Methods` bundle of live components, and the backend that the `estimate:` block declares.
+That scenario is written in `configs/pairwise_t4.yaml`. `load_run` then reads the file and returns the three values an experiment takes: a `Config` of plain numbers, a `Models` bundle of live components, and the backend that the `estimate:` block declares.
 
 ```python
 from opencdarr.experiment import load_run
 
-CONFIG, FILE_METHODS, FILE_BACKEND = load_run("../../configs/pairwise_t4.yaml")
+CONFIG, FILE_MODELS, FILE_BACKEND = load_run("../../configs/pairwise_t4.yaml")
 
 print(CONFIG)
-print(FILE_METHODS)
+print(FILE_MODELS)
 print(FILE_BACKEND)
 ```
 
@@ -32,7 +32,7 @@ Config  seed 0
   conflict    rpz 50 m | lookahead 120 s
   simulation  dt 1 s | broadcast every 1 s (fixed gaps)
               ends on 10 s clear, 300 s cap
-Methods
+Models
   cdarr     StateBased() -> MVP(margin=1.05) -> PastCPA(bouncing_guard=False)
   cns       perfect (no navigation, communication or surveillance model)
   airframe  Performance(v_max=18.0, v_min=-18.0, ax=5.0, yaw_rate_max=90.0, phi_max=0.0, roll_rate_max=0.0) (every aircraft)
@@ -51,13 +51,13 @@ from dataclasses import replace
 
 from opencdarr import GnssNavigation
 
-METHODS = replace(FILE_METHODS, navigation=GnssNavigation())
+MODELS = replace(FILE_MODELS, navigation=GnssNavigation())
 
-print(METHODS)
+print(MODELS)
 ```
 
 ```{ .text .output }
-Methods
+Models
   cdarr     StateBased() -> MVP(margin=1.05) -> PastCPA(bouncing_guard=False)
   cns       navigation GnssNavigation(pos_distribution=gaussian, vel_distribution=gaussian, effects=()) | no communication | no surveillance
   airframe  Performance(v_max=18.0, v_min=-18.0, ax=5.0, yaw_rate_max=90.0, phi_max=0.0, roll_rate_max=0.0) (every aircraft)
@@ -65,6 +65,12 @@ Methods
   wind      still air
   scenario  PairwiseEncounter(speed=10.2889, dpsi=None, dcpa=None, side=None, gs_intr=10.2889, dcpa_max=50.0, tlos=60.0)
 ```
+
+```python
+fig = MODELS.preview(CONFIG, cdarr = False).plot()
+```
+
+![Left, two straight ground tracks with no manoeuvre in either, the ownship flying due north from the origin and the intruder descending from the north-east, crossing near 0 east and 600 north. Right, their separation falling from 1230 metres to a minimum of 46.8 metres just after 60 seconds, inside the 50 metre protected zone, then opening again to 210 metres by the end of the run at 71 seconds.](../assets/img/t4-preview-baseline.png)
 
 ## T4.2. The independent variables
 
@@ -80,7 +86,7 @@ Five parameters. Four are swept, one is held.
 
 Three crossing angles, two accuracies, three resolvers and three recovery criteria give 54 conditions. Each condition is one estimate.
 
-### T4.2.1 A resolver of your own
+### A resolver of your own
 
 `MVP` and `VO` come from the library. The third one does not. Write a resolver by subclassing
 `ConflictResolver` and implementing `resolve`. The method receives the ownship state, the
@@ -137,15 +143,12 @@ class TurnRight(ConflictResolver):
         )
 ```
 
-### T4.2.2. The recovery criteria
+### The recovery criteria
 
 Resolution decides how to leave a conflict. Recovery decides when to stop leaving it. The three
 criteria:
-
 1. `PastCPA`, which resumes once the pair is past its closest point of approach and is clear of the protected zone. It reads where the two aircraft **are**.
-
 2. `FTR`, free-to-revert, which resumes once a return to the nominal velocity would still keep the pair clear. It reads what would happen **next**.
-
 3. `ProbabilisticFTR`, a probabilistic version of FTR, can be read from [this pre-print](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6675278). It reads `pos_ci95` and `vel_ci95` directly and converts them into a constructed *belief* about the `dcpa`, then flags that it is safe to resume navigation when $P(clear) > 0.999$
 
 ```python
@@ -184,7 +187,7 @@ import time
 from opencdarr.experiment import MC, run_experiment
 
 t0 = time.perf_counter()
-mc = run_experiment(AXES, methods=METHODS, backend=MC(n_encounters=100),
+mc = run_experiment(AXES, models=MODELS, backend=MC(n_encounters=100),
                     base_config=CONFIG, seed=0, n_jobs=4,
                     cache=True
                     )
@@ -198,19 +201,19 @@ mc_dataframe[["dpsi", "pos_ci95", "resolver", "recovery", "p_los_ac", "median_mi
 ```
 
 ```{ .text .output }
-54 conditions x 100 encounters in 81 s
+54 conditions x 100 encounters in 36 s
 
-    dpsi  pos_ci95   resolver          recovery  p_los_ac  median_min_sep
-0      2       3.0        MVP           PastCPA      0.01       51.384713
-1      2       3.0        MVP               FTR      0.00       60.825873
-2      2       3.0        MVP  ProbabilisticFTR      0.00       64.121550
-3      2       3.0         VO           PastCPA      0.73       38.483379
-4      2       3.0         VO               FTR      0.00       64.688555
-5      2       3.0         VO  ProbabilisticFTR      0.01       65.610438
-6      2       3.0  TurnRight           PastCPA      0.58       47.493127
-7      2       3.0  TurnRight               FTR      0.00       61.777671
-8      2       3.0  TurnRight  ProbabilisticFTR      0.00       67.644718
-9      2      10.0        MVP           PastCPA      0.00       53.207451
+   dpsi  pos_ci95   resolver          recovery  p_los_ac  median_min_sep
+0     2       3.0        MVP           PastCPA      0.01       51.384713
+1     2       3.0        MVP               FTR      0.00       60.825873
+2     2       3.0        MVP  ProbabilisticFTR      0.00       64.121550
+3     2       3.0         VO           PastCPA      0.73       38.483379
+4     2       3.0         VO               FTR      0.00       64.688555
+5     2       3.0         VO  ProbabilisticFTR      0.01       65.610438
+6     2       3.0  TurnRight           PastCPA      0.58       47.493127
+7     2       3.0  TurnRight               FTR      0.00       61.777671
+8     2       3.0  TurnRight  ProbabilisticFTR      0.00       67.644718
+9     2      10.0        MVP           PastCPA      0.00       53.207451
 ```
 
 ```python
@@ -301,6 +304,8 @@ mc_dataframe.query("resolver == 'MVP' and recovery in ['FTR', 'ProbabilisticFTR'
 29    10      10.0      MVP  ProbabilisticFTR       0.0        0.0     0.0   
 37    45       3.0      MVP               FTR       0.0        0.0     0.0   
 38    45       3.0      MVP  ProbabilisticFTR       0.0        0.0     0.0   
+46    45      10.0      MVP               FTR       0.0        0.0     0.0   
+47    45      10.0      MVP  ProbabilisticFTR       0.0        0.0     0.0   
 
     median_min_sep  n_los  n_encounters  detection_rate  
 1        60.825873      0           100             1.0  
@@ -313,6 +318,8 @@ mc_dataframe.query("resolver == 'MVP' and recovery in ['FTR', 'ProbabilisticFTR'
 29      106.497384      0           100             1.0  
 37       65.120354      0           100             1.0  
 38      102.378536      0           100             1.0  
+46       64.370731      0           100             1.0  
+47      105.079203      0           100             1.0
 ```
 
 Surprise surprise! All the values are 0. A `P(LoS)` of zero tells us nothing about the value of the probability. It only says that we need more samples to estimate it. Since we are tight on budget, let's re-run the Monte Carlo for MVP and the two recoveries alone.
@@ -334,7 +341,7 @@ AXES_ROBUST = {
 
 t0 = time.perf_counter()
 
-mc_robust = run_experiment(AXES_ROBUST, methods=METHODS, backend=MC(n_encounters=2500),
+mc_robust = run_experiment(AXES_ROBUST, models=MODELS, backend=MC(n_encounters=2500),
                            base_config=CONFIG, seed=0, n_jobs=4, cache=True
                           )
 
@@ -347,19 +354,21 @@ mc_robust_dataframe[['dpsi', 'pos_ci95', 'resolver', 'recovery', 'p_los_ac', 'n_
 ```
 
 ```{ .text .output }
-12 conditions x 1000 encounters in 642 s
+12 conditions x 2500 encounters in 664 s
 
-   dpsi  pos_ci95 resolver          recovery  p_los_ac  n_los
-0     2       3.0      MVP               FTR    0.0000      0
-1     2       3.0      MVP  ProbabilisticFTR    0.0000      0
-2     2      10.0      MVP               FTR    0.0000      0
-3     2      10.0      MVP  ProbabilisticFTR    0.0000      0
-4    10       3.0      MVP               FTR    0.0000      0
-5    10       3.0      MVP  ProbabilisticFTR    0.0000      0
-6    10      10.0      MVP               FTR    0.0004      1
-7    10      10.0      MVP  ProbabilisticFTR    0.0000      0
-8    45       3.0      MVP               FTR    0.0000      0
-9    45       3.0      MVP  ProbabilisticFTR    0.0000      0
+    dpsi  pos_ci95 resolver          recovery  p_los_ac  n_los
+0      2       3.0      MVP               FTR    0.0000      0
+1      2       3.0      MVP  ProbabilisticFTR    0.0000      0
+2      2      10.0      MVP               FTR    0.0000      0
+3      2      10.0      MVP  ProbabilisticFTR    0.0000      0
+4     10       3.0      MVP               FTR    0.0000      0
+5     10       3.0      MVP  ProbabilisticFTR    0.0000      0
+6     10      10.0      MVP               FTR    0.0004      1
+7     10      10.0      MVP  ProbabilisticFTR    0.0000      0
+8     45       3.0      MVP               FTR    0.0000      0
+9     45       3.0      MVP  ProbabilisticFTR    0.0000      0
+10    45      10.0      MVP               FTR    0.0000      0
+11    45      10.0      MVP  ProbabilisticFTR    0.0000      0
 ```
 
 ```python
@@ -382,7 +391,7 @@ from opencdarr.experiment import IPS
 LEVELS = [150.0, 99.0, 84.3, 66.8, 58.2, 54.0, 52.0, 51.0, 50.5, 50.3, 50.0]
 
 t0 = time.perf_counter()
-ips = run_experiment(AXES_ROBUST, methods=METHODS,
+ips = run_experiment(AXES_ROBUST, models=MODELS,
                      backend=IPS(levels=LEVELS, n_particles=400, reps=1),
                      base_config=CONFIG, seed=0, n_jobs=4,
                      cache=True)
@@ -393,7 +402,7 @@ print(f"{len(ips)} conditions x {ips.backend.n_particles} particles x "
 ```
 
 ```{ .text .output }
-12 conditions x 400 particles x 1 replications in 678 s
+12 conditions x 400 particles x 1 replication(s) in 516 s
 ```
 
 ```python
@@ -402,17 +411,19 @@ ips_dataframe[['dpsi', 'pos_ci95', 'resolver', 'recovery', 'p_los_ac', 'n_collap
 ```
 
 ```{ .text .output }
-   dpsi  pos_ci95 resolver          recovery  p_los_ac  n_collapsed
-0     2       3.0      MVP               FTR  0.000191            0
-1     2       3.0      MVP  ProbabilisticFTR  0.000239            0
-2     2      10.0      MVP               FTR  0.000409            0
-3     2      10.0      MVP  ProbabilisticFTR  0.000126            0
-4    10       3.0      MVP               FTR  0.000034            0
-5    10       3.0      MVP  ProbabilisticFTR  0.000126            0
-6    10      10.0      MVP               FTR  0.000117            0
-7    10      10.0      MVP  ProbabilisticFTR  0.000035            0
-8    45       3.0      MVP               FTR       NaN            1
-9    45       3.0      MVP  ProbabilisticFTR  0.000030            0
+    dpsi  pos_ci95 resolver          recovery  p_los_ac  n_collapsed
+0      2       3.0      MVP               FTR  0.000191            0
+1      2       3.0      MVP  ProbabilisticFTR  0.000239            0
+2      2      10.0      MVP               FTR  0.000409            0
+3      2      10.0      MVP  ProbabilisticFTR  0.000126            0
+4     10       3.0      MVP               FTR  0.000034            0
+5     10       3.0      MVP  ProbabilisticFTR  0.000126            0
+6     10      10.0      MVP               FTR  0.000117            0
+7     10      10.0      MVP  ProbabilisticFTR  0.000035            0
+8     45       3.0      MVP               FTR       NaN            1
+9     45       3.0      MVP  ProbabilisticFTR  0.000030            0
+10    45      10.0      MVP               FTR  0.000215            0
+11    45      10.0      MVP  ProbabilisticFTR  0.000030            0
 ```
 
 ```python

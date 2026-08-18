@@ -2,11 +2,11 @@
 authorship: opus-5
 ---
 
-# T3. Setting up an experiment
+# T3. Six aircraft in an experiment
 
 Previously, T2 estimated P(LoS) for one pairwise encounter configuration using `estimate_p_los`.
 
-This notebook changes three things. First, the conflict becomes an encounter between six heterogeneous aircraft. Second, we use `run_experiment`: it takes the conditions we write, runs one estimate for each, and hands back one row for each. Third, since we already use `run_experiment`, we can use different kinds of `Config` and `Methods` and compare them within a single code execution.
+This notebook changes three things. First, the conflict becomes an encounter between six heterogeneous aircraft. Second, we use `run_experiment`: it takes the conditions we write, runs one estimate for each, and hands back one row for each. Third, since we already use `run_experiment`, we can use different kinds of `Config` and `Models` and compare them within a single code execution.
 
 The world and the CDaRR stack are not written here at all. They come from a configuration file, `configs/ring_t3.yaml`. The question the sweep puts to the two resolvers is whether `MVP` or `VO` ensures the safety of this multi-aircraft encounter as the position accuracy degrades.
 
@@ -106,26 +106,26 @@ CrossingRing(n=6, radius=None, speed=(14.0, 20.0, 17.0, 17.0, 14.0, 20.0), t_to_
 
 ## T3.3. The numbers and the stack, from a file
 
-The environment this fleet flies in is not written here. It is written in `configs/ring_t3.yaml`, and `load_run` returns the three values an experiment takes: the `Config` of plain numbers, a `Methods` bundle of the components the file names, and the backend its `estimate` block declares.
+The environment this fleet flies in is not written here. It is written in `configs/ring_t3.yaml`, and `load_run` returns the three values an experiment takes: the `Config` of plain numbers, a `Models` bundle of the components the file names, and the backend its `estimate` block declares.
 
 ```python
 from opencdarr import Comm, GnssNavigation, LastKnown
 from opencdarr.cns import lognormal_latency
 from opencdarr.experiment import load_run
 
-CONFIG, BASE_METHODS, BACKEND = load_run("../../configs/ring_t3.yaml")
+CONFIG, BASE_MODELS, BACKEND = load_run("../../configs/ring_t3.yaml")
 
 print(CONFIG)
-print(BASE_METHODS)
+print(BASE_MODELS)
 ```
 
 ```{ .text .output }
 Config  seed 0
-  uncertainty  sensor  perfect (no position or velocity error)
+  uncertainty  sensor  pos 10 m, vel 1 m/s (95% radial)
   conflict    rpz 50 m | lookahead 120 s
   simulation  dt 0.5 s | broadcast every 1 s (fixed gaps)
               ends on 10 s clear, 600 s cap
-Methods
+Models
   cdarr     StateBased() -> MVP(margin=1.05) -> FTR()
   cns       perfect (no navigation, communication or surveillance model)
   airframe  Performance(v_max=18.0, v_min=-18.0, ax=5.0, yaw_rate_max=90.0, phi_max=0.0, roll_rate_max=0.0) (every aircraft)
@@ -137,8 +137,8 @@ Methods
 Note that previously we defined the `Config` and `Scenario` in `Encounter` directly. Now, we load the base from the configuration file, then we change the fields we want with `replace`.
 
 ```python
-METHODS = replace(
-    BASE_METHODS,
+MODELS = replace(
+    BASE_MODELS,
     airframes=AIRFRAMES,   # one per aircraft, in ring order
     scenario=RING,         # one cruise per aircraft, which a single `speed:` cannot say
     navigation=GnssNavigation(),
@@ -147,11 +147,11 @@ METHODS = replace(
     surveillance=LastKnown(),
 )
 
-print(METHODS)
+print(MODELS)
 ```
 
 ```{ .text .output }
-Methods
+Models
   cdarr     StateBased() -> MVP(margin=1.05) -> FTR()
   cns       navigation GnssNavigation(pos_distribution=gaussian, vel_distribution=gaussian, effects=()) | communication Comm(gates=(), reception_prob=0.7, latency=<lambda>) | surveillance LastKnown()
   airframe  6 per-aircraft airframes (mixed fleet)
@@ -159,41 +159,22 @@ Methods
   scenario  CrossingRing(n=6, radius=None, speed=(14.0, 20.0, 17.0, 17.0, 14.0, 20.0), t_to_centre=100.0)
 ```
 
-You can see how the printed `METHODS` changes after we replace the fields.
-
-## T3.4. Experimenting using the `BASE_METHODS`
-
-Start from the case with no uncertainty in it, because it sets the scale for everything below.
+You can see how the printed `MODELS` changes after we replace the fields. Then, we can visualize the encounter using:
 
 ```python
-from opencdarr.experiment import MC, Fixed, run_experiment
-
-res = run_experiment(
-    {"navigation": Fixed(None), "communication": Fixed(None)},  # a perfect sensor and datalink
-    methods=BASE_METHODS,
-    backend=MC(n_encounters=1),   # placed and deterministic: one run says what 1000 would
-    base_config=CONFIG,
-    seed=0,
-)
-res.cell()
+fig = MODELS.preview(CONFIG, cdarr=True, seed = 3).plot()
 ```
 
-```{ .text .output }
-MonteCarloEstimate  0 losses in 1 encounters
-  p_los      0 (per run, per aircraft and mean K coincide)
-  closest    median 50.4 m (per-encounter record: min_seps)
-  detection  rate 1 (a diagnostic, not the result)
-```
+![Left, the ground tracks of the six aircraft, released between 1400 and 3100 metres out and converging on the centre of the ring, each one bending away near the middle where the resolver acts. Right, the separation of all fifteen pairs against time, every curve falling from between 1500 and 3500 metres to its closest approach near 100 seconds. The four named pairs A0-A3, A1-A5, A3-A4 and A2-A4 run lowest, and the tightest of them holds 70.5 metres, above the 50 metre protected zone.](../assets/img/t3-preview-encounter.png)
 
-With perfect navigation, MVP keeps the whole fleet separated with a 0.4 m margin.
-
-## T3.5. MVP vs VO, under navigation uncertainty
+## T3.4. MVP vs VO, under navigation uncertainty
 
 Mirror, mirror on the wall, which is the safest of them all? Conflict resolution is technically solved when there is no uncertainty. Let's compare MVP and VO under navigation uncertainty. The **independent variables** in this experiment are the position uncertainty `pos_ci95` and the conflict resolution algorithm `resolver`. Also, we want to hold the velocity uncertainty `vel_ci95` at a `Fixed` value of 1 m/s. So, this is how the `run_experiment` call is written:
 
 ```python
 from opencdarr import MVP, VO
-from opencdarr.experiment import Sweep
+from opencdarr.experiment import Sweep, Fixed, MC
+from opencdarr import run_experiment
 
 RESOLVERS = {"MVP": MVP(margin=1.05), "VO": VO(margin=1.05)}
 
@@ -202,14 +183,14 @@ res = run_experiment(
      "vel_ci95": Fixed(1.0),                                        # m/s — held
      "resolver": Sweep(list(RESOLVERS),                             # the second axis
                        build=lambda name: RESOLVERS[name])},
-    methods=METHODS,
+    models=MODELS,
     backend=MC(n_encounters=1000),   # for each of the six conditions
     base_config=CONFIG,
     seed=0,
     n_jobs=-1,
 )
-res.frame()[["pos_ci95", "resolver", "p_los_run", "p_los_ac", "mean_k", "n_los",
-             "median_min_sep"]].round(4)
+res.toDataFrame()[["pos_ci95", "resolver", "p_los_run", "p_los_ac", "mean_k", "n_los",
+                   "median_min_sep"]].round(4)
 ```
 
 ```{ .text .output }
@@ -222,7 +203,7 @@ res.frame()[["pos_ci95", "resolver", "p_los_run", "p_los_ac", "mean_k", "n_los",
 5      30.0       VO      0.097    0.0360   0.116     97         66.4255
 ```
 
-### T3.5.1. The three metrics
+### The three numbers
 
 Important note:
 
@@ -239,19 +220,15 @@ P(\text{LoS})_\text{ac} = \frac{\sum_r A_r}{\sum_r N_r}
 \mathbb{E}[K] = \frac{1}{R}\sum_r K_r
 $$
 
-* $P(\text{LoS})_\text{run}$, the `p_los_run` column, is a probability per encounter. One pair in a loss of separation is sufficient to count the full encounter. 
+$P(\text{LoS})_\text{run}$, the `p_los_run` column, is a probability per encounter. One pair in a loss of separation is sufficient to count the full encounter. $P(\text{LoS})_\text{ac}$, the `p_los_ac` column, is a probability per aircraft. Each aircraft counts one time in each encounter, and not one time for each intruder. $\mathbb{E}[K]$, the `mean_k` column, is a frequency, not a probability. Its value can be more
+than 1. The denominator of $P(\text{LoS})_\text{ac}$ is a sum over the encounters. Thus the ratio stays
+correct if the number of aircraft changes between the encounters.
 
-* $P(\text{LoS})_\text{ac}$, the `p_los_ac` column, is a probability per aircraft. Each aircraft
-counts one time in each encounter, and not one time for each intruder. 
-
-* $\mathbb{E}[K]$, the `mean_k` column, is a frequency, not a probability. Its value can be more
-than 1. The denominator of $P(\text{LoS})_\text{ac}$ is a sum over the encounters. Thus the ratio stays correct if the number of aircraft changes between the encounters.
-
-For a fleet of two aircraft, the three values are identical.
+For a fleet of two aircraft, the three values are equal.
 
 **Extra note**: `list(RESOLVERS)` gives the dict's keys, and without `build` a `Sweep`'s levels go straight onto the bundle, so the run would get the string `"MVP"` where a resolver belongs and fail with `'str' object has no attribute 'resolve'`.
 
-## T3.6. The result
+## T3.5. The result
 
 ```python
 import matplotlib.pyplot as plt
