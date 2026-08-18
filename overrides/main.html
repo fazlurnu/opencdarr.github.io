@@ -51,3 +51,88 @@
     </div>
   {% endif %}
 {% endblock %}
+
+<!--
+  Authorship signature.
+
+  A page says who wrote it in its front matter, and this block prints one line
+  for it at the foot of the article. The writer goes in `authorship`, and, if a
+  person went over the draft afterwards, they go in `edited-by`:
+
+      ---
+      authorship: opus-5
+      edited-by: fazlur
+      ---
+
+  Both take a key from extra.authors in mkdocs.yml, which holds the printed name
+  and whether that signer is a model or a person.
+
+  A signer who is not in that list can still sign, by saying which of the two
+  they are in the value itself:
+
+      authorship: ai:GPT-5.2
+      authorship: human:Jane Doe
+
+  A bare name that is in neither the list nor that form still prints, but it is
+  marked as unattributed and gets the neutral icon, because at that point nothing
+  has said whether a person or a model wrote the page and this block will not
+  guess. Guessing would default a model nobody registered into the pen icon of a
+  human author, which is the one mistake a signature like this must not make.
+
+  A page with no `authorship` key prints nothing at all, so an unsigned page
+  reads as unsigned rather than as the work of a person.
+-->
+{% set authors = config.extra.authors | default({}, true) %}
+
+{% block content %}
+  {{ super() }}
+  {% if page.meta and page.meta.authorship %}
+
+    {#- The writer. A value prefixed "ai:" or "human:" carries its own kind; a
+        bare one is looked up in extra.authors, and is unknown if it is not
+        there. -#}
+    {% set writer_raw = page.meta.authorship %}
+    {% set writer_parts = writer_raw.split(":", 1) %}
+    {% if writer_parts | length == 2 and writer_parts[0] in ["ai", "human"] %}
+      {% set writer_kind = writer_parts[0] %}
+      {% set writer_name = writer_parts[1] | trim %}
+    {% else %}
+      {% set writer_entry = authors.get(writer_raw) | default({}, true) %}
+      {% set writer_kind = writer_entry.get("kind") | default("unknown", true) %}
+      {% set writer_name = writer_entry.get("name") | default(writer_raw, true) %}
+    {% endif %}
+
+    {#- The editor, if a person went over the draft. Only their name is needed:
+        what an editor is, the line already says. -#}
+    {% set editor_raw = page.meta["edited-by"] | default(none, true) %}
+    {% if editor_raw %}
+      {% set editor_parts = editor_raw.split(":", 1) %}
+      {% if editor_parts | length == 2 and editor_parts[0] in ["ai", "human"] %}
+        {% set editor_name = editor_parts[1] | trim %}
+      {% else %}
+        {% set editor_entry = authors.get(editor_raw) | default({}, true) %}
+        {% set editor_name = editor_entry.get("name") | default(editor_raw, true) %}
+      {% endif %}
+    {% endif %}
+
+    {% if editor_raw %}
+      {% set icon, state = "material/account-edit-outline", "signed" %}
+      {% set text = ("Drafted by " if writer_kind == "ai" else "Written by ") ~ writer_name ~
+                    ", then edited and verified by " ~ editor_name ~ "." %}
+    {% elif writer_kind == "ai" %}
+      {% set icon, state = "material/robot-outline", "unreviewed" %}
+      {% set text = "Written by " ~ writer_name ~ ". Not yet edited by a human." %}
+    {% elif writer_kind == "human" %}
+      {% set icon, state = "material/draw-pen", "signed" %}
+      {% set text = "Written by " ~ writer_name ~ "." %}
+    {% else %}
+      {% set icon, state = "material/account-outline", "unattributed" %}
+      {% set text = "Written by " ~ writer_name ~ "." %}
+    {% endif %}
+
+    <div class="md-authorship md-authorship--{{ state }}">
+      {% include ".icons/" ~ icon ~ ".svg" %}
+      <span>{{ text }}</span>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,15 +1,24 @@
-/* Brand colours taken from the logo */
+/* Brand colours taken from the logo. These reach the page only because
+   theme.palette in mkdocs.yml sets primary and accent to "custom" — see the note
+   there for what a named palette does to them. Material derives the body link
+   colour from --md-primary-fg-color, so the green below is also the colour of
+   every link on the site. */
 :root {
   --md-primary-fg-color:        #205B20;  /* logo green   */
   --md-primary-fg-color--light: #2f7a2f;
   --md-primary-fg-color--dark:  #164016;
   --md-accent-fg-color:         #AA4945;  /* logo red     */
+  /* Material fills this one in for each of its own palettes, so "custom" has to
+     state it: it is the wash behind a hovered link and a search hit, and left
+     unset it stays the indigo of the stock theme. */
+  --md-accent-fg-color--transparent: #AA49451a;
 }
 
 /* Dark scheme: keep the same brand hues but let text stay readable */
 [data-md-color-scheme="slate"] {
   --md-primary-fg-color:        #2f7a2f;
   --md-accent-fg-color:         #c96662;
+  --md-accent-fg-color--transparent: #c966621a;
 }
 
 /* Remove the top header bar entirely (openap.dev-style, logo lives in sidebar) */
@@ -446,4 +455,38 @@ html .md-footer-meta.md-typeset a:hover {
   font-size: 0.6rem;
   line-height: 1.5;
   color: var(--md-default-fg-color--light);
+}
+
+/* Authorship signature, written into the page by overrides/main.html from the
+   `authorship` key in a page's front matter. It sits at the foot of the article,
+   under a hairline rule, because it is provenance and not content: the reader
+   meets the material first and the byline last, in the same corner of the page
+   as "Edit this page" and the next/previous links.
+
+   All three states read at the same muted weight, icon included: the signature
+   states who wrote a page, and it is not the job of a byline to editorialise
+   about the answer. The icon carries the difference on its own. The state is
+   still on the element as md-authorship--signed / --unreviewed / --unattributed,
+   for anyone who later wants to hang something off it. */
+.md-typeset .md-authorship {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-top: 2.4rem;
+  padding-top: 0.6rem;
+  border-top: 0.05rem solid var(--md-default-fg-color--lightest);
+  font-size: 0.62rem;
+  line-height: 1.4;
+  color: var(--md-default-fg-color--light);
+}
+
+/* The icons are raw Material SVGs, included without a class, so they carry no
+   sizing or fill of their own. The line box of the text is about the same height
+   as the icon, so flex-start puts the two on the same baseline and keeps the
+   icon against the first line when a narrow screen wraps the text. */
+.md-typeset .md-authorship svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  fill: currentcolor;
 }

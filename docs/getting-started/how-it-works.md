@@ -1,14 +1,18 @@
+---
+authorship: fazlur
+---
+
 # How it works
 
 This page describes the design principles, the parts it is built from, then a full step of the parts interaction.
 
 ## Design principles
 
-**Realism.** Aircraft measure their own position with an error, broadcasts are missed and delayed, and wind pushes each airframe off its commanded track. Results then reflect how separation maintains safety against imperfect situational awareness. You can also add your own source of uncertainty.
+**Realism.** Aircraft measure their own position with an error, then it is broadcast with a certain reception probability and latency, and wind pushes each airframe off its commanded track. Results reflect how separation maintains safety against imperfect situational awareness. You can also add your own source of uncertainty.
 
-**Modularity.** Every component listed in **[Modules](../handbook/index.md)** is an abstract base class with a single method to implement. Changing an experiment means changing an implementation. Comparing your conflict resolution algorithm is changing one input argument away.
+**Modularity.** Every component listed in **[Modules](../handbook/index.md)** is an abstract base class with a single method to implement. Changing an experiment means changing an implementation. Comparing your conflict resolution algorithm with existing ones is changing one input argument away.
 
-**Support for rare-event simulation.** The aircraft state, the guidance progress, and the separation memory are values passed in and out of each step. Therefore, the full state of a run can be copied at any instant and continued independently. That is what a rare-event estimator (multi-level splitting, IPS) needs to clone a particle mid-flight and follow the rare branch toward a collision.
+**Support for rare-event simulation.** The aircraft state, the guidance progress, and the separation memory are values passed in and out of each step. Therefore, the full state of a run can be copied at any instant and continued independently. That is what a rare-event estimator (interacting particle system, IPS) needs to clone a particle mid-flight and follow the rare branch toward a collision.
 
 ## An aircraft is an `Agent`
 
@@ -25,7 +29,7 @@ Agent(state, perf, kinematics(), autopilot())
 
 ### The agent and the environment
 
-An aircraft is an agent, where it is aware of its own states, performance, kinematics, and the mission. Then, they are spawned in an environment with specific interaction rules such as conflict detection, conflict resolution, and recovery criterion. The decision for managing separation is based on a noisy self-state and off-timed traffic perception. Wind interface is also available.
+An aircraft is an agent, it is aware of its own states, performance, kinematics, and the mission. Then, they are spawned in an environment with specific interaction rules such as conflict detection, conflict resolution, and recovery criterion. The decision for managing separation is based on a noisy self-state and/or off-timed traffic perception. Wind interface is also available.
 
 Flying a mixed aircraft type is possible. For instance, in an experiment you can spawn agents with a `Multirotor` kinematics as well as a `FixedWing` one. However, both will interact under that same interaction rules, all of them share the same CDaRR algorithm. Curious to see? Try [A first run](first-run.md).
 
@@ -54,4 +58,4 @@ The table below summarises the interface and role of each of the modules. Note t
 | [`Autopilot`](../handbook/aircraft/autopilot.md) | Produce the nominal command that tracks the mission |
 </div>
 
-The [next page](first-run.md) simulates a pairwise encounter, two aircraft flying toward a conflict and avoiding it, and then puts three aircraft in conflict at the same time.
+The [next page](../tutorials/index.md) contains several tutorials that you can try.

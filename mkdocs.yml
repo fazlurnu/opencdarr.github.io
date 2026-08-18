@@ -26,11 +26,23 @@ theme:
   # No header logo — the logo lives at the top of the left sidebar (openap-style).
   favicon: assets/logo-horizontal-no-text.png
   palette:
+    # primary and accent are "custom" so that Material writes no colours of its
+    # own onto <body>, leaving the logo greens and reds in stylesheets/extra.css
+    # as the only ones in play. Name a palette here instead (the stock default is
+    # indigo) and Material stamps data-md-color-primary/accent on <body> and
+    # re-declares the colour variables there — and a custom property set on
+    # <body> shadows the :root one for everything inside the page, so the brand
+    # colours never reach it. Material also derives the body link colour from
+    # --md-primary-fg-color, so this is what makes links the logo green.
     - scheme: default
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - scheme: slate
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
@@ -65,8 +77,9 @@ nav:
       - Aircraft:
           - handbook/aircraft/index.md
           - Performance: handbook/aircraft/performance.md
-          - Multirotor: handbook/aircraft/multirotor.md
-          - Fixed-wing: handbook/aircraft/fixedwing.md
+          - Kinematics:
+              - Multirotor: handbook/aircraft/multirotor.md
+              - Fixed-wing: handbook/aircraft/fixedwing.md
           - Autopilot & mission: handbook/aircraft/autopilot.md
       - Separation:
           - handbook/separation/index.md
@@ -165,6 +178,23 @@ plugins:
         build-your-own/separation-manager/conflict-resolution.md: handbook/separation/conflict-resolution.md
         build-your-own/separation-manager/recovery-criteria.md: handbook/separation/recovery-criteria.md
         build-your-own/cns/index.md: handbook/cns/index.md
+
+# Who can sign a page. The key is what a page puts in its `authorship:` or
+# `edited-by:` front matter, `name` is what the signature prints, and `kind: ai`
+# is what earns the robot icon and the red flag on a page no human has edited.
+# A key that is not listed here is printed verbatim, so a one-off signer — a
+# guest author, a model not added yet — needs no edit to this file.
+extra:
+  authors:
+    fazlur:
+      name: Fazlur
+      kind: human
+    opus-5:
+      name: Claude Opus 5
+      kind: ai
+    sonnet-5:
+      name: Claude Sonnet 5
+      kind: ai
 
 markdown_extensions:
   - admonition
